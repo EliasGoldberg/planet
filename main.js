@@ -12,7 +12,7 @@
     program.activate();
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    program.setUniformMatrix('u_xformMatrix', Matrix.translation(0.5, 0.5, 0));
+    program.setUniformMatrix('u_xformMatrix', Matrix.scale(0.5, 0.5, 0));
     n = program.setAttribPointer('a_Position', [0.0, 0.5, -0.5, -0.5, 0.5, -0.5]);
     return gl.drawArrays(gl.TRIANGLES, 0, n);
   };
@@ -100,6 +100,10 @@
 
     Matrix.translation = function(x, y, z) {
       return new Float32Array([1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, x, y, z, 1.0]);
+    };
+
+    Matrix.scale = function(x, y, z) {
+      return new Float32Array([x, 0.0, 0.0, 0.0, 0.0, y, 0.0, 0.0, 0.0, 0.0, z, 0.0, 0.0, 0.0, 0.0, 1.0]);
     };
 
     return Matrix;
