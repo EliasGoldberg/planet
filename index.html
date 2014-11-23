@@ -32,19 +32,15 @@
     ''')
 
     program.activate()
-    program.addAttrib('a_Position')
-    program.addAttrib('a_PointSize')
 
     gl.clearColor(0.0,0.0,0.0,1.0)
     gl.clear(gl.COLOR_BUFFER_BIT)
-    program.setAttrib('a_Position',[0.0,0.0,0.0])
+    n = program.setAttribPointer('a_Position',[0.0, 0.5, -0.5, -0.5, 0.5, -0.5])
     program.setAttrib('a_PointSize',10)
-    gl.drawArrays(gl.POINTS, 0, 1)
+    gl.drawArrays(gl.POINTS, 0, n)
 
   class Program
-    constructor: (@gl) ->
-      @program = @gl.createProgram()
-      @attribs = []
+    constructor: (@gl) -> @program = @gl.createProgram()
 
     addShader: (type,source) ->
       shader = @gl.createShader(type)
@@ -60,15 +56,22 @@
       console.log message if message? and message != ''
       @gl.useProgram(@program)
 
-    addAttrib: (name) ->
-      @attribs[name] = @gl.getAttribLocation(@program,name)
-
     setAttrib: (name,value) ->
+      attrib = @gl.getAttribLocation(@program,name)
       # must get correct version of the vertexAttrib method based on value
       isVector = value.length?
       size = if isVector then value.length else 1
       vee = if isVector then 'v' else ''
-      @gl["vertexAttrib#{size}f#{vee}"](@attribs[name],value)
+      @gl["vertexAttrib#{size}f#{vee}"](attrib,value)
+
+    setAttribPointer:(name,values) ->
+      attrib = @gl.getAttribLocation(@program,name)
+      vertexBuffer = @gl.createBuffer();
+      @gl.bindBuffer(@gl.ARRAY_BUFFER, vertexBuffer);
+      @gl.bufferData(@gl.ARRAY_BUFFER, new Float32Array(values), @gl.STATIC_DRAW)
+      @gl.vertexAttribPointer(attrib, 2, @gl.FLOAT, false, 0, 0)
+      @gl.enableVertexAttribArray(attrib)
+      values.length / 2
 
   $(main)
 </script>
