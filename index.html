@@ -11,39 +11,45 @@
 <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="http://coffeescript.org/extras/coffee-script.js"></script>
 <script type="text/coffeescript">
-  $ =>
+  main = () =>
     canvas = document.getElementById('gl')
-    gl = canvas.getContext('experimental-webgl');
+    gl = canvas.getContext('experimental-webgl')
+    program = new Program(gl)
 
-    VSHADER_SOURCE = '''
-          void main() {
-               gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
-               gl_PointSize = 10.0;
-          }
-        '''
-    vShader = gl.createShader(gl.VERTEX_SHADER)
-    gl.shaderSource(vShader,VSHADER_SOURCE)
-    gl.compileShader(vShader)
+    program.addShader(gl.VERTEX_SHADER,'''
+      void main() {
+           gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+           gl_PointSize = 10.0;
+      }
+    ''')
 
-    FSHADER_SOURCE = '''
-          void main() {
-            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-          }
-        '''
-    fShader = gl.createShader(gl.FRAGMENT_SHADER)
-    gl.shaderSource(fShader,FSHADER_SOURCE)
-    gl.compileShader(fShader)
+    program.addShader(gl.FRAGMENT_SHADER,'''
+      void main() {
+        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+      }
+    ''')
 
-    program = gl.createProgram()
-    gl.attachShader(program,vShader)
-    gl.attachShader(program,fShader)
-
-    gl.linkProgram(program)
-    gl.useProgram(program)
+    program.activate()
 
     gl.clearColor(0.0,0.0,0.0,1.0)
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.POINTS, 0, 1)
+
+  class Program
+    constructor: (@gl) ->
+      @program = @gl.createProgram()
+
+    addShader: (type,source) ->
+      shader = @gl.createShader(type)
+      @gl.shaderSource(shader,source)
+      @gl.compileShader(shader)
+      @gl.attachShader(@program,shader)
+
+    activate: ->
+      @gl.linkProgram(@program)
+      @gl.useProgram(@program)
+
+  $(main)
 </script>
 </body>
 </html>
