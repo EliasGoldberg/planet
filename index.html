@@ -11,14 +11,15 @@
 <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="http://coffeescript.org/extras/coffee-script.js"></script>
 <script type="text/coffeescript">
-  main = () =>
+  main = () ->
     canvas = document.getElementById('gl')
     gl = canvas.getContext('experimental-webgl')
     program = new Program(gl)
 
     program.addShader(gl.VERTEX_SHADER,'''
+      attribute vec4 a_Position;
       void main() {
-           gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+           gl_Position = a_Position;
            gl_PointSize = 10.0;
       }
     ''')
@@ -30,13 +31,17 @@
     ''')
 
     program.activate()
+    program.addAttrib('a_Position')
+
     gl.clearColor(0.0,0.0,0.0,1.0)
     gl.clear(gl.COLOR_BUFFER_BIT)
+    program.setAttrib('a_Position',[0.0,0.0,0.0])
     gl.drawArrays(gl.POINTS, 0, 1)
 
   class Program
     constructor: (@gl) ->
       @program = @gl.createProgram()
+      @attribs = []
 
     addShader: (type,source) ->
       shader = @gl.createShader(type)
@@ -51,6 +56,9 @@
       message = @gl.getProgramInfoLog(@program)
       console.log message if message? and message != ''
       @gl.useProgram(@program)
+
+    addAttrib: (name) -> @attribs[name] = @gl.getAttribLocation(@program,name)
+    setAttrib: (name,value) -> @gl.vertexAttrib3fv(@attribs[name],value)
 
   $(main)
 </script>
