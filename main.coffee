@@ -22,19 +22,32 @@ main = () ->
   gl.clearColor(0.0,0.0,0.0,1.0)
   gl.clear(gl.COLOR_BUFFER_BIT)
 
-  program.setUniformMatrix('u_xformMatrix',Matrix.rotation(90,0,0,1))
+  m = Matrix.identity()
+    .rotate(45,0,0,1)
+    .translate(0.5,0.75,0)
+    .scale(0.5,0.5,0.5)
+    .array()
+
+  program.setUniformMatrix('u_xformMatrix',m)
   n = program.setAttribPointer('a_Position',[0.0, 0.5, -0.5, -0.5, 0.5, -0.5])
 
   gl.drawArrays(gl.TRIANGLES, 0, n)
 
 class Matrix
-  constructor: ->
+  constructor: (array) ->
+    @m = if array? then array else
+      [1,0,0,0,
+       0,1,0,0,
+       0,0,1,0,
+       0,0,0,1]
+
+  @identity: -> new Matrix(null)
 
   @rotation: (angle,x,y,z) ->
     radian = Math.PI * angle / 180.0
     cosB = Math.cos(radian)
     sinB = Math.sin(radian)
-    new Float32Array([
+    new Matrix([
       cosB + x*x*(1-cosB), x*y*(1-cosB) - z*sinB,  x*z*(1-cosB)+y*sinB,  0.0,
       y*x*(1-cosB) + z*sinB, cosB + y*y*(1-cosB),  y*z*(1-cosB)-x*sinB,  0.0,
       z*x*(1-cosB) - y*sinB, z*y*(1-cosB)+x*sinB,    cosB+z*z*(1-cosB),  0.0,
@@ -42,19 +55,44 @@ class Matrix
     ])
 
   @translation: (x,y,z) ->
-    new Float32Array([
+    new Matrix([
       1.0, 0.0, 0.0, 0.0,
       0.0, 1.0, 0.0, 0.0,
       0.0, 0.0, 1.0, 0.0,
         x,   y,   z, 1.0
     ])
 
-  @scale: (x,y,z) ->
-    new Float32Array([
+  @scalation: (x,y,z) ->
+    new Matrix([
         x, 0.0, 0.0, 0.0,
       0.0,   y, 0.0, 0.0,
       0.0, 0.0,   z, 0.0,
       0.0, 0.0, 0.0, 1.0
     ])
+
+  rotate: (angle,x,y,z) ->
+    r = Matrix.rotation(angle,x,y,z)
+    this.multiply(r)
+
+  translate: (x,y,z) ->
+    t = Matrix.translation(x,y,z)
+    this.multiply(t)
+
+  scale: (x,y,z) ->
+    s = Matrix.scalation(x,y,z)
+    this.multiply(s)
+
+  multiply: (b) ->
+    n = b.m
+    mn = []
+    for i in [0..3]
+      for j in [0..3]
+        sum = 0
+        for k in [0..3]
+          sum += @m[4*i+k] * n[4*k+j]
+        mn[i*4+j] = sum
+    new Matrix(mn)
+
+  array: -> new Float32Array(@m)
 
 $(main)

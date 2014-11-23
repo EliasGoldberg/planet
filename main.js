@@ -3,7 +3,7 @@
   var Matrix, main;
 
   main = function() {
-    var canvas, gl, n, program;
+    var canvas, gl, m, n, program;
     canvas = document.getElementById('gl');
     gl = canvas.getContext('experimental-webgl');
     program = new ShaderProgram(gl);
@@ -12,28 +12,73 @@
     program.activate();
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    program.setUniformMatrix('u_xformMatrix', Matrix.rotation(90, 0, 0, 1));
+    m = Matrix.identity().rotate(45, 0, 0, 1).translate(0.5, 0.75, 0).scale(0.5, 0.5, 0.5).array();
+    program.setUniformMatrix('u_xformMatrix', m);
     n = program.setAttribPointer('a_Position', [0.0, 0.5, -0.5, -0.5, 0.5, -0.5]);
     return gl.drawArrays(gl.TRIANGLES, 0, n);
   };
 
   Matrix = (function() {
-    function Matrix() {}
+    function Matrix(array) {
+      this.m = array != null ? array : [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+    }
+
+    Matrix.identity = function() {
+      return new Matrix(null);
+    };
 
     Matrix.rotation = function(angle, x, y, z) {
       var cosB, radian, sinB;
       radian = Math.PI * angle / 180.0;
       cosB = Math.cos(radian);
       sinB = Math.sin(radian);
-      return new Float32Array([cosB + x * x * (1 - cosB), x * y * (1 - cosB) - z * sinB, x * z * (1 - cosB) + y * sinB, 0.0, y * x * (1 - cosB) + z * sinB, cosB + y * y * (1 - cosB), y * z * (1 - cosB) - x * sinB, 0.0, z * x * (1 - cosB) - y * sinB, z * y * (1 - cosB) + x * sinB, cosB + z * z * (1 - cosB), 0.0, 0.0, 0.0, 0.0, 1.0]);
+      return new Matrix([cosB + x * x * (1 - cosB), x * y * (1 - cosB) - z * sinB, x * z * (1 - cosB) + y * sinB, 0.0, y * x * (1 - cosB) + z * sinB, cosB + y * y * (1 - cosB), y * z * (1 - cosB) - x * sinB, 0.0, z * x * (1 - cosB) - y * sinB, z * y * (1 - cosB) + x * sinB, cosB + z * z * (1 - cosB), 0.0, 0.0, 0.0, 0.0, 1.0]);
     };
 
     Matrix.translation = function(x, y, z) {
-      return new Float32Array([1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, x, y, z, 1.0]);
+      return new Matrix([1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, x, y, z, 1.0]);
     };
 
-    Matrix.scale = function(x, y, z) {
-      return new Float32Array([x, 0.0, 0.0, 0.0, 0.0, y, 0.0, 0.0, 0.0, 0.0, z, 0.0, 0.0, 0.0, 0.0, 1.0]);
+    Matrix.scalation = function(x, y, z) {
+      return new Matrix([x, 0.0, 0.0, 0.0, 0.0, y, 0.0, 0.0, 0.0, 0.0, z, 0.0, 0.0, 0.0, 0.0, 1.0]);
+    };
+
+    Matrix.prototype.rotate = function(angle, x, y, z) {
+      var r;
+      r = Matrix.rotation(angle, x, y, z);
+      return this.multiply(r);
+    };
+
+    Matrix.prototype.translate = function(x, y, z) {
+      var t;
+      t = Matrix.translation(x, y, z);
+      return this.multiply(t);
+    };
+
+    Matrix.prototype.scale = function(x, y, z) {
+      var s;
+      s = Matrix.scalation(x, y, z);
+      return this.multiply(s);
+    };
+
+    Matrix.prototype.multiply = function(b) {
+      var i, j, k, mn, n, sum, _i, _j, _k;
+      n = b.m;
+      mn = [];
+      for (i = _i = 0; _i <= 3; i = ++_i) {
+        for (j = _j = 0; _j <= 3; j = ++_j) {
+          sum = 0;
+          for (k = _k = 0; _k <= 3; k = ++_k) {
+            sum += this.m[4 * i + k] * n[4 * k + j];
+          }
+          mn[i * 4 + j] = sum;
+        }
+      }
+      return new Matrix(mn);
+    };
+
+    Matrix.prototype.array = function() {
+      return new Float32Array(this.m);
     };
 
     return Matrix;
