@@ -7,7 +7,7 @@
 <body>
 <canvas id='gl'
         style='width:400px; height:300px;
-                   border: solid 1px black;' />
+               border: solid 1px black;' />
 <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="http://coffeescript.org/extras/coffee-script.js"></script>
 <script type="text/coffeescript">
@@ -18,8 +18,9 @@
 
     program.addShader(gl.VERTEX_SHADER,'''
       attribute vec4 a_Position;
+      uniform vec4 u_Translation;
       void main() {
-           gl_Position = a_Position;
+           gl_Position = a_Position + u_Translation;
       }
     ''')
 
@@ -33,6 +34,8 @@
 
     gl.clearColor(0.0,0.0,0.0,1.0)
     gl.clear(gl.COLOR_BUFFER_BIT)
+
+    program.setUniform('u_Translation',[0.5, 0.5, 0.0, 0.0])
     n = program.setAttribPointer('a_Position',[0.0, 0.5, -0.5, -0.5, 0.5, -0.5])
 
     gl.drawArrays(gl.TRIANGLES, 0, n)
@@ -58,6 +61,10 @@
       attrib = @gl.getAttribLocation(@program,name)
       vertexAttrib = this.getVertexAttribMethodName(value)
       @gl[vertexAttrib](attrib,value)
+
+    setUniform: (name,value) ->
+      uniform = @gl.getUniformLocation(@program, name)
+      @gl.uniform4fv(uniform,value)
 
     setAttribPointer: (name,values) ->
       attrib = @gl.getAttribLocation(@program,name)
