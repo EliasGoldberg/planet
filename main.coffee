@@ -22,7 +22,7 @@ main = () ->
   gl.clearColor(0.0,0.0,0.0,1.0)
   gl.clear(gl.COLOR_BUFFER_BIT)
 
-  program.setUniformMatrix('u_xformMatrix',Matrix.rotation(90))
+  program.setUniformMatrix('u_xformMatrix',Matrix.translation(0.5,0.5,0))
   n = program.setAttribPointer('a_Position',[0.0, 0.5, -0.5, -0.5, 0.5, -0.5])
 
   gl.drawArrays(gl.TRIANGLES, 0, n)
@@ -84,6 +84,14 @@ class Matrix
       sinB, cosB,  0.0,  0.0,
       0.0,  0.0,  1.0,  0.0,
       0.0,  0.0,  0.0,  1.0
+    ])
+
+  @translation: (x,y,z) ->
+    new Float32Array([
+      1.0, 0.0, 0.0, 0.0,
+      0.0, 1.0, 0.0, 0.0,
+      0.0, 0.0, 1.0, 0.0,
+        x,   y,   z, 1.0
     ])
 
 $(main)
