@@ -5,9 +5,9 @@ main = () ->
 
   program.addShader(gl.VERTEX_SHADER,'''
       attribute vec4 a_Position;
-      uniform mat4 u_xformMatrix;
+      uniform mat4 u_ModelMatrix;
       void main() {
-           gl_Position = u_xformMatrix * a_Position;
+           gl_Position = u_ModelMatrix * a_Position;
       }
     ''')
 
@@ -23,13 +23,12 @@ main = () ->
   gl.clear(gl.COLOR_BUFFER_BIT)
 
   m = Matrix.identity()
-    .rotate(45,0,0,1)
-    .translate(0.5,0.75,0)
-    .scale(0.5,0.5,0.5)
-    .array()
+  .rotate(60,0,0,1)
+  .translate(0.5,0.0,0)
+  .array()
 
-  program.setUniformMatrix('u_xformMatrix',m)
-  n = program.setAttribPointer('a_Position',[0.0, 0.5, -0.5, -0.5, 0.5, -0.5])
+  program.setUniformMatrix('u_ModelMatrix',m)
+  n = program.setAttribPointer('a_Position',[0.0, 0.3, -0.3, -0.3, 0.3, -0.3])
 
   gl.drawArrays(gl.TRIANGLES, 0, n)
 
@@ -48,11 +47,10 @@ class Matrix
     cosB = Math.cos(radian)
     sinB = Math.sin(radian)
     new Matrix([
-      cosB + x*x*(1-cosB), x*y*(1-cosB) - z*sinB,  x*z*(1-cosB)+y*sinB,  0.0,
-      y*x*(1-cosB) + z*sinB, cosB + y*y*(1-cosB),  y*z*(1-cosB)-x*sinB,  0.0,
-      z*x*(1-cosB) - y*sinB, z*y*(1-cosB)+x*sinB,    cosB+z*z*(1-cosB),  0.0,
-                        0.0,                 0.0,                  0.0,  1.0
-    ])
+      cosB+x*x*(1-cosB),   y*x*(1-cosB)+z*sinB, z*x*(1-cosB)-y*sinB, 0.0,
+      x*y*(1-cosB)-z*sinB, cosB + y*y*(1-cosB), z*y*(1-cosB)+x*sinB, 0.0,
+      x*z*(1-cosB)+y*sinB, y*z*(1-cosB)-x*sinB, cosB+z*z*(1-cosB),   0.0,
+                      0.0,                 0.0,               0.0,   1.0])
 
   @translation: (x,y,z) ->
     new Matrix([
@@ -71,16 +69,13 @@ class Matrix
     ])
 
   rotate: (angle,x,y,z) ->
-    r = Matrix.rotation(angle,x,y,z)
-    this.multiply(r)
+    Matrix.rotation(angle,x,y,z).multiply(this)
 
   translate: (x,y,z) ->
-    t = Matrix.translation(x,y,z)
-    this.multiply(t)
+    Matrix.translation(x,y,z).multiply(this)
 
   scale: (x,y,z) ->
-    s = Matrix.scalation(x,y,z)
-    this.multiply(s)
+    Matrix.scalation(x,y,z).multiply(this)
 
   multiply: (b) ->
     n = b.m

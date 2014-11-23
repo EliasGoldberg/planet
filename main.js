@@ -7,14 +7,14 @@
     canvas = document.getElementById('gl');
     gl = canvas.getContext('experimental-webgl');
     program = new ShaderProgram(gl);
-    program.addShader(gl.VERTEX_SHADER, 'attribute vec4 a_Position;\nuniform mat4 u_xformMatrix;\nvoid main() {\n     gl_Position = u_xformMatrix * a_Position;\n}');
+    program.addShader(gl.VERTEX_SHADER, 'attribute vec4 a_Position;\nuniform mat4 u_ModelMatrix;\nvoid main() {\n     gl_Position = u_ModelMatrix * a_Position;\n}');
     program.addShader(gl.FRAGMENT_SHADER, 'void main() {\n  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n}');
     program.activate();
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    m = Matrix.identity().rotate(45, 0, 0, 1).translate(0.5, 0.75, 0).scale(0.5, 0.5, 0.5).array();
-    program.setUniformMatrix('u_xformMatrix', m);
-    n = program.setAttribPointer('a_Position', [0.0, 0.5, -0.5, -0.5, 0.5, -0.5]);
+    m = Matrix.identity().rotate(60, 0, 0, 1).translate(0.5, 0.0, 0).array();
+    program.setUniformMatrix('u_ModelMatrix', m);
+    n = program.setAttribPointer('a_Position', [0.0, 0.3, -0.3, -0.3, 0.3, -0.3]);
     return gl.drawArrays(gl.TRIANGLES, 0, n);
   };
 
@@ -32,7 +32,7 @@
       radian = Math.PI * angle / 180.0;
       cosB = Math.cos(radian);
       sinB = Math.sin(radian);
-      return new Matrix([cosB + x * x * (1 - cosB), x * y * (1 - cosB) - z * sinB, x * z * (1 - cosB) + y * sinB, 0.0, y * x * (1 - cosB) + z * sinB, cosB + y * y * (1 - cosB), y * z * (1 - cosB) - x * sinB, 0.0, z * x * (1 - cosB) - y * sinB, z * y * (1 - cosB) + x * sinB, cosB + z * z * (1 - cosB), 0.0, 0.0, 0.0, 0.0, 1.0]);
+      return new Matrix([cosB + x * x * (1 - cosB), y * x * (1 - cosB) + z * sinB, z * x * (1 - cosB) - y * sinB, 0.0, x * y * (1 - cosB) - z * sinB, cosB + y * y * (1 - cosB), z * y * (1 - cosB) + x * sinB, 0.0, x * z * (1 - cosB) + y * sinB, y * z * (1 - cosB) - x * sinB, cosB + z * z * (1 - cosB), 0.0, 0.0, 0.0, 0.0, 1.0]);
     };
 
     Matrix.translation = function(x, y, z) {
@@ -44,21 +44,15 @@
     };
 
     Matrix.prototype.rotate = function(angle, x, y, z) {
-      var r;
-      r = Matrix.rotation(angle, x, y, z);
-      return this.multiply(r);
+      return Matrix.rotation(angle, x, y, z).multiply(this);
     };
 
     Matrix.prototype.translate = function(x, y, z) {
-      var t;
-      t = Matrix.translation(x, y, z);
-      return this.multiply(t);
+      return Matrix.translation(x, y, z).multiply(this);
     };
 
     Matrix.prototype.scale = function(x, y, z) {
-      var s;
-      s = Matrix.scalation(x, y, z);
-      return this.multiply(s);
+      return Matrix.scalation(x, y, z).multiply(this);
     };
 
     Matrix.prototype.multiply = function(b) {
