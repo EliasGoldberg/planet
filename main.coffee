@@ -22,7 +22,7 @@ main = () ->
   gl.clearColor(0.0,0.0,0.0,1.0)
   gl.clear(gl.COLOR_BUFFER_BIT)
 
-  program.setUniformMatrix('u_xformMatrix',Matrix.scale(0.5,0.5,0))
+  program.setUniformMatrix('u_xformMatrix',Matrix.rotation(90,0,0,1))
   n = program.setAttribPointer('a_Position',[0.0, 0.5, -0.5, -0.5, 0.5, -0.5])
 
   gl.drawArrays(gl.TRIANGLES, 0, n)
@@ -30,15 +30,15 @@ main = () ->
 class Matrix
   constructor: ->
 
-  @rotation: (angle) ->
+  @rotation: (angle,x,y,z) ->
     radian = Math.PI * angle / 180.0
     cosB = Math.cos(radian)
     sinB = Math.sin(radian)
     new Float32Array([
-      cosB, sinB,  0.0,  0.0,
-      sinB, cosB,  0.0,  0.0,
-      0.0,  0.0,  1.0,  0.0,
-      0.0,  0.0,  0.0,  1.0
+      cosB + x*x*(1-cosB), x*y*(1-cosB) - z*sinB,  x*z*(1-cosB)+y*sinB,  0.0,
+      y*x*(1-cosB) + z*sinB, cosB + y*y*(1-cosB),  y*z*(1-cosB)-x*sinB,  0.0,
+      z*x*(1-cosB) - y*sinB, z*y*(1-cosB)+x*sinB,    cosB+z*z*(1-cosB),  0.0,
+                        0.0,                 0.0,                  0.0,  1.0
     ])
 
   @translation: (x,y,z) ->
