@@ -18,9 +18,10 @@
 
     program.addShader(gl.VERTEX_SHADER,'''
       attribute vec4 a_Position;
+      attribute float a_PointSize;
       void main() {
            gl_Position = a_Position;
-           gl_PointSize = 10.0;
+           gl_PointSize = a_PointSize;
       }
     ''')
 
@@ -32,10 +33,12 @@
 
     program.activate()
     program.addAttrib('a_Position')
+    program.addAttrib('a_PointSize')
 
     gl.clearColor(0.0,0.0,0.0,1.0)
     gl.clear(gl.COLOR_BUFFER_BIT)
     program.setAttrib('a_Position',[0.0,0.0,0.0])
+    program.setAttrib('a_PointSize',10)
     gl.drawArrays(gl.POINTS, 0, 1)
 
   class Program
@@ -57,8 +60,15 @@
       console.log message if message? and message != ''
       @gl.useProgram(@program)
 
-    addAttrib: (name) -> @attribs[name] = @gl.getAttribLocation(@program,name)
-    setAttrib: (name,value) -> @gl.vertexAttrib3fv(@attribs[name],value)
+    addAttrib: (name) ->
+      @attribs[name] = @gl.getAttribLocation(@program,name)
+
+    setAttrib: (name,value) ->
+      # must get correct version of the vertexAttrib method based on value
+      isVector = value.length?
+      size = if isVector then value.length else 1
+      vee = if isVector then 'v' else ''
+      @gl["vertexAttrib#{size}f#{vee}"](@attribs[name],value)
 
   $(main)
 </script>
