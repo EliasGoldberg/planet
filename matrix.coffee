@@ -1,5 +1,5 @@
 class @Matrix
-  constructor: (array) -> @m = if array? then array else Matrix.identity()
+  constructor: (array) -> @m = if array? then array else Matrix.identity().m
 
   @identity: -> new Matrix([1,0,0,0,
                             0,1,0,0,
@@ -32,13 +32,12 @@ class @Matrix
   scale: (x,y,z) -> Matrix.scalation(x,y,z).multiply(this)
 
   multiply: (b) ->
-    n = b.m
     mn = []
     for i in [0..3]
       for j in [0..3]
         sum = 0
         for k in [0..3]
-          sum += @m[4*i+k] * n[4*k+j]
+          sum += @m[4*i+k] * b.m[4*k+j]
         mn[i*4+j] = sum
     new Matrix(mn)
 

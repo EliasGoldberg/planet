@@ -1,4 +1,4 @@
-main = () ->
+$ ->
   canvas = document.getElementById('gl')
   gl = canvas.getContext('experimental-webgl')
   program = new ShaderProgram(gl)
@@ -19,9 +19,6 @@ main = () ->
 
   program.activate()
 
-  gl.clearColor(0.0,0.0,0.0,1.0)
-  gl.clear(gl.COLOR_BUFFER_BIT)
-
   m = Matrix.identity()
   .rotate(60,0,0,1)
   .translate(0.5,0.0,0)
@@ -30,6 +27,6 @@ main = () ->
   program.setUniformMatrix('u_ModelMatrix',m)
   n = program.setAttribPointer('a_Position',[0.0, 0.3, -0.3, -0.3, 0.3, -0.3])
 
+  gl.clearColor(0.0,0.0,0.0,1.0)
+  gl.clear(gl.COLOR_BUFFER_BIT)
   gl.drawArrays(gl.TRIANGLES, 0, n)
-
-$(main)

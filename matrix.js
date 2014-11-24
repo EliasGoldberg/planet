@@ -2,7 +2,7 @@
 (function() {
   this.Matrix = (function() {
     function Matrix(array) {
-      this.m = array != null ? array : Matrix.identity();
+      this.m = array != null ? array : Matrix.identity().m;
     }
 
     Matrix.identity = function() {
@@ -38,14 +38,13 @@
     };
 
     Matrix.prototype.multiply = function(b) {
-      var i, j, k, mn, n, sum, _i, _j, _k;
-      n = b.m;
+      var i, j, k, mn, sum, _i, _j, _k;
       mn = [];
       for (i = _i = 0; _i <= 3; i = ++_i) {
         for (j = _j = 0; _j <= 3; j = ++_j) {
           sum = 0;
           for (k = _k = 0; _k <= 3; k = ++_k) {
-            sum += this.m[4 * i + k] * n[4 * k + j];
+            sum += this.m[4 * i + k] * b.m[4 * k + j];
           }
           mn[i * 4 + j] = sum;
         }
