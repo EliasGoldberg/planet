@@ -28,14 +28,14 @@ class @ShaderProgram
     uniform = @gl.getUniformLocation(@program, name)
     @gl.uniformMatrix4fv(uniform,false,value)
 
-  setAttribPointer: (name,values) ->
+  setAttribPointer: (name,values,dim) ->
     attrib = @gl.getAttribLocation(@program,name)
     vertexBuffer = @gl.createBuffer();
     @gl.bindBuffer(@gl.ARRAY_BUFFER, vertexBuffer);
     @gl.bufferData(@gl.ARRAY_BUFFER, new Float32Array(values), @gl.STATIC_DRAW)
-    @gl.vertexAttribPointer(attrib, 2, @gl.FLOAT, false, 0, 0)
+    @gl.vertexAttribPointer(attrib, dim, @gl.FLOAT, false, 0, 0)
     @gl.enableVertexAttribArray(attrib)
-    values.length / 2
+    values.length / dim
 
   getVertexAttribMethodName: (value) ->
     isVector = value.length?
