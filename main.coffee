@@ -21,19 +21,26 @@ $ ->
 
   program.activate()
 
-  program.setAttribPointer('a_Position',[0.0, 0.3, -0.3, -0.3, 0.3, -0.3], 2)
-  n = program.setAttribPointer('a_PointSize',[10.0, 20.0, 30.0], 1)
+  verticesSizes = new Float32Array([
+     0.0,  0.5, 10.0,
+    -0.5, -0.5, 20.0,
+     0.5, -0.5, 30.0
+  ])
+
+  buffer = program.makeArrayBuffer(verticesSizes)
+  program.setAttribPointer(buffer,'a_Position', 2, 3, 0)
+  program.setAttribPointer(buffer,'a_PointSize', 1, 3, 2)
 
   gl.clearColor(0.0,0.0,0.0,1.0)
 
   currentAngle = 0.0
   g_last = Date.now()
 
-  draw = (gl,n,currentAngle) ->
+  draw = (gl, currentAngle) ->
     m = Matrix.rotation(currentAngle,0,0,1).translate(0.35,0,0)
     program.setUniformMatrix 'u_ModelMatrix', m.array()
     gl.clear(gl.COLOR_BUFFER_BIT)
-    gl.drawArrays(gl.POINTS, 0, n)
+    gl.drawArrays(gl.POINTS, 0, 3)
 
   animate = (angle) ->
     now = Date.now()
@@ -43,7 +50,6 @@ $ ->
 
   tick = ->
     currentAngle = animate(currentAngle)
-    draw(gl,n,currentAngle)
+    draw(gl,currentAngle)
     requestAnimationFrame(tick)
   tick()
-

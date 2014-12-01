@@ -1,5 +1,7 @@
 class @ShaderProgram
-  constructor: (@gl) -> @program = @gl.createProgram()
+  constructor: (@gl) ->
+    @program = @gl.createProgram()
+    @bufferBytes = {}
 
   addShader: (type,source) ->
     shader = @gl.createShader(type)
@@ -28,14 +30,18 @@ class @ShaderProgram
     uniform = @gl.getUniformLocation(@program, name)
     @gl.uniformMatrix4fv(uniform,false,value)
 
-  setAttribPointer: (name,values,dim) ->
+  makeArrayBuffer: (bufferData) ->
+    buffer = @gl.createBuffer()
+    @gl.bindBuffer(@gl.ARRAY_BUFFER, buffer);
+    @gl.bufferData(@gl.ARRAY_BUFFER, bufferData, @gl.STATIC_DRAW)
+    @bufferBytes[buffer] = bufferData.BYTES_PER_ELEMENT
+    buffer
+
+  setAttribPointer: (buffer,name,dim,stride,offset) ->
+    s = @bufferBytes[buffer]
     attrib = @gl.getAttribLocation(@program,name)
-    vertexBuffer = @gl.createBuffer();
-    @gl.bindBuffer(@gl.ARRAY_BUFFER, vertexBuffer);
-    @gl.bufferData(@gl.ARRAY_BUFFER, new Float32Array(values), @gl.STATIC_DRAW)
-    @gl.vertexAttribPointer(attrib, dim, @gl.FLOAT, false, 0, 0)
+    @gl.vertexAttribPointer(attrib, dim, @gl.FLOAT, false, stride*s, offset*s)
     @gl.enableVertexAttribArray(attrib)
-    values.length / dim
 
   getVertexAttribMethodName: (value) ->
     isVector = value.length?
