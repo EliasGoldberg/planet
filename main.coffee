@@ -21,15 +21,17 @@ $ ->
 
   program.activate()
 
-  verticesSizes = new Float32Array([
-     0.0,  0.5, 10.0,
-    -0.5, -0.5, 20.0,
-     0.5, -0.5, 30.0
-  ])
+  vertices =
+    data: [ 0.0,  0.5, 10.0,
+           -0.5, -0.5, 20.0,
+            0.5, -0.5, 30.0 ]
+    stride: 3
+    pointers:[name: 'a_Position',  dim: 2, offset: 0
+              name: 'a_PointSize', dim: 1, offset: 2]
 
-  buffer = program.makeArrayBuffer(verticesSizes)
-  program.setAttribPointer(buffer,'a_Position', 2, 3, 0)
-  program.setAttribPointer(buffer,'a_PointSize', 1, 3, 2)
+  buffer = program.makeArrayBuffer(vertices.data)
+  for p in vertices.pointers
+    program.setAttribPointer(buffer,p.name, p.dim, vertices.stride, p.offset)
 
   gl.clearColor(0.0,0.0,0.0,1.0)
 

@@ -32,9 +32,10 @@ class @ShaderProgram
 
   makeArrayBuffer: (bufferData) ->
     buffer = @gl.createBuffer()
+    floatArray = new Float32Array(bufferData)
     @gl.bindBuffer(@gl.ARRAY_BUFFER, buffer);
-    @gl.bufferData(@gl.ARRAY_BUFFER, bufferData, @gl.STATIC_DRAW)
-    @bufferBytes[buffer] = bufferData.BYTES_PER_ELEMENT
+    @gl.bufferData(@gl.ARRAY_BUFFER, floatArray, @gl.STATIC_DRAW)
+    @bufferBytes[buffer] = floatArray.BYTES_PER_ELEMENT
     buffer
 
   setAttribPointer: (buffer,name,dim,stride,offset) ->
