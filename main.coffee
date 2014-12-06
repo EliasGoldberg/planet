@@ -5,13 +5,11 @@ $ ->
 
   program.addShader(gl.VERTEX_SHADER,'''
       attribute vec4 a_Position;
-      attribute float a_PointSize;
       attribute vec4 a_Color;
       varying vec4 v_Color;
       uniform mat4 u_ModelMatrix;
       void main() {
         gl_Position = u_ModelMatrix * a_Position;
-        gl_PointSize = a_PointSize;
         v_Color = a_Color;
       }
     ''')
@@ -27,14 +25,13 @@ $ ->
   program.activate()
 
   vertices =
-    data: [ 0.0,  0.5, 10.0, 1.0, 0.0, 0.0,
-           -0.5, -0.5, 20.0, 0.0, 1.0, 0.0,
-            0.5, -0.5, 30.0, 0.0, 0.0, 1.0 ]
-    stride: 6
+    data: [ 0.0,  0.5, 1.0, 0.0, 0.0,
+           -0.5, -0.5, 0.0, 1.0, 0.0,
+            0.5, -0.5, 0.0, 0.0, 1.0 ]
+    stride: 5
     pointers:[
       {name: 'a_Position',  dim: 2, offset: 0},
-      {name: 'a_PointSize', dim: 1, offset: 2},
-      {name: 'a_Color',     dim: 3, offset: 3}]
+      {name: 'a_Color',     dim: 3, offset: 2}]
 
   new Model(vertices,gl,program)
 
@@ -47,7 +44,7 @@ $ ->
     m = Matrix.rotation(currentAngle,0,0,1).translate(0.35,0,0)
     program.setUniformMatrix 'u_ModelMatrix', m.array()
     gl.clear(gl.COLOR_BUFFER_BIT)
-    gl.drawArrays(gl.POINTS, 0, 3)
+    gl.drawArrays(gl.TRIANGLES, 0, 3)
 
   animate = (angle) ->
     now = Date.now()
