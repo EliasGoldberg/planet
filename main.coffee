@@ -17,10 +17,13 @@ $ ->
 
   program.addShader(gl.FRAGMENT_SHADER,'''
       precision mediump float;
-      uniform sampler2D u_Sampler;
+      uniform sampler2D u_Sampler0;
+      uniform sampler2D u_Sampler1;
       varying vec2 v_TexCoord;
       void main() {
-        gl_FragColor = texture2D(u_Sampler, v_TexCoord);
+        vec4 color0 = texture2D(u_Sampler0, v_TexCoord);
+        vec4 color1 = texture2D(u_Sampler1, v_TexCoord);
+        gl_FragColor = color0 * color1;
       }
     ''')
 
@@ -34,11 +37,11 @@ $ ->
     stride: 4
     pointers:[
       {name: 'a_Position', dim: 2, offset: 0},
-      {name: 'a_TexCoord', dim: 2, offset: 2}],
+      {name: 'a_TexCoord', dim: 2, offset: 2}]
     uniforms:[]
     textures:[
-      url: 'sky.JPG'
-      sampler:'u_Sampler']
+      {url: 'sky.JPG',    sampler:'u_Sampler0'},
+      {url: 'circle.gif', sampler:'u_Sampler1'}]
 
   model = new Model(vertices,gl,program)
 
