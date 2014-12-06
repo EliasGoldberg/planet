@@ -1,9 +1,12 @@
 class @Model
-  constructor: (@modelData,@gl,@program) ->
+  constructor: (@model,@gl,@program) ->
     @bufferBytes = {}
-    buffer = this.makeArrayBuffer(@modelData.data)
-    for p in @modelData.pointers
-      this.setAttribPointer(buffer, p.name, p.dim, @modelData.stride, p.offset)
+    buf = this.makeArrayBuffer(@model.data)
+    s = @bufferBytes[buf]
+    for p in @model.pointers
+      @program.setAttribPointer(buf, p.name, p.dim, @model.stride*s, p.offset*s)
+    for u in @model.uniforms
+      @program.setUniform(u.name, u.value);
 
   makeArrayBuffer: (bufferData) ->
     buffer = @gl.createBuffer()
@@ -12,9 +15,3 @@ class @Model
     @gl.bufferData(@gl.ARRAY_BUFFER, floatArray, @gl.STATIC_DRAW)
     @bufferBytes[buffer] = floatArray.BYTES_PER_ELEMENT
     buffer
-
-  setAttribPointer: (buffer,name,dim,stride,offset) ->
-    s = @bufferBytes[buffer]
-    attrib = @gl.getAttribLocation(@program.id,name)
-    @gl.vertexAttribPointer(attrib, dim, @gl.FLOAT, false, stride*s, offset*s)
-    @gl.enableVertexAttribArray(attrib)

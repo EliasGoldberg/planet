@@ -19,19 +19,23 @@ class @ShaderProgram
 
   setAttrib: (name,value) ->
     attrib = @gl.getAttribLocation(@id,name)
-    vertexAttrib = this.getVertexAttribMethodName(value)
-    @gl[vertexAttrib](attrib,value)
+    @gl["vertexAttrib#{this.getMethodSuffix(value)}"](attrib,value)
+
+  setAttribPointer: (buffer,name,dim,stride,offset) ->
+    attrib = @gl.getAttribLocation(@id,name)
+    @gl.vertexAttribPointer(attrib, dim, @gl.FLOAT, false, stride, offset)
+    @gl.enableVertexAttribArray(attrib)
 
   setUniform: (name,value) ->
     uniform = @gl.getUniformLocation(@id, name)
-    @gl.uniform4fv(uniform,value)
+    @gl["uniform#{this.getMethodSuffix(value)}"](uniform,value)
 
   setUniformMatrix: (name, value) ->
     uniform = @gl.getUniformLocation(@id, name)
     @gl.uniformMatrix4fv(uniform,false,value)
 
-  getVertexAttribMethodName: (value) ->
+  getMethodSuffix: (value) ->
     isVector = value.length?
     size = if isVector then value.length else 1
     vee = if isVector then 'v' else ''
-    "vertexAttrib#{size}f#{vee}"
+    "#{size}f#{vee}"
