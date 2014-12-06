@@ -38,4 +38,6 @@ class @ShaderProgram
     isVector = value.length?
     size = if isVector then value.length else 1
     vee = if isVector then 'v' else ''
-    "#{size}f#{vee}"
+    a = if isVector then value else [value]
+    type = if a.filter((v) -> v != Math.max(v)).length == 0 then 'i' else 'f'
+    "#{size}#{type}#{vee}"

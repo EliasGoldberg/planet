@@ -5,34 +5,39 @@ $ ->
 
   program.addShader(gl.VERTEX_SHADER,'''
       attribute vec4 a_Position;
+      attribute vec2 a_TexCoord;
+      varying vec2 v_TexCoord;
       uniform mat4 u_ModelMatrix;
       void main() {
         gl_Position = u_ModelMatrix * a_Position;
+        v_TexCoord = a_TexCoord;
       }
     ''')
 
   program.addShader(gl.FRAGMENT_SHADER,'''
       precision mediump float;
-      uniform float u_Width;
-      uniform float u_Height;
+      uniform sampler2D u_Sampler;
+      varying vec2 v_TexCoord;
       void main() {
-        gl_FragColor = vec4(gl_FragCoord.x/u_Width, 0.0,
-                            gl_FragCoord.y/u_Height, 1.0);
+        gl_FragColor = texture2D(u_Sampler, v_TexCoord);
       }
     ''')
 
   program.activate()
 
   vertices =
-    data: [ 0.0,  0.5,
-           -0.5, -0.5,
-            0.5, -0.5 ]
-    stride: 2
+    data: [-0.5,  0.5, 0.0, 1.0,
+           -0.5, -0.5, 0.0, 0.0,
+            0.5,  0.5, 1.0, 1.0,
+            0.5, -0.5, 1.0, 0.0 ]
+    stride: 4
     pointers:[
-      {name: 'a_Position',  dim: 2, offset: 0}],
-    uniforms:[
-      {name: 'u_Width',  value: gl.drawingBufferWidth},
-      {name: 'u_Height', value: gl.drawingBufferHeight}]
+      {name: 'a_Position', dim: 2, offset: 0},
+      {name: 'a_TexCoord', dim: 2, offset: 2}],
+    uniforms:[]
+    textures:[
+      url: 'sky.JPG'
+      sampler:'u_Sampler']
 
   new Model(vertices,gl,program)
 
@@ -45,7 +50,7 @@ $ ->
     m = Matrix.rotation(currentAngle,0,0,1).translate(0.35,0,0)
     program.setUniformMatrix 'u_ModelMatrix', m.array()
     gl.clear(gl.COLOR_BUFFER_BIT)
-    gl.drawArrays(gl.TRIANGLES, 0, 3)
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
   animate = (angle) ->
     now = Date.now()
