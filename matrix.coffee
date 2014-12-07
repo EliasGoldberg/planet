@@ -1,5 +1,7 @@
 class @Matrix
   constructor: (array) -> @m = if array? then array else Matrix.identity().m
+  array: -> new Float32Array(@m)
+  elements: -> @m
 
   @identity: -> new Matrix([1,0,0,0,
                             0,1,0,0,
@@ -31,6 +33,19 @@ class @Matrix
   translate: (x,y,z) -> Matrix.translation(x,y,z).multiply(this)
   scale: (x,y,z) -> Matrix.scalation(x,y,z).multiply(this)
 
+  @lookAt: (eye,center,up) ->
+      eyeV = new Vector(eye)
+      centerV = new Vector(center)
+      upV = new Vector(up)
+      f = centerV.minus(eyeV).normalize()
+      s = f.crossProduct(upV).normalize()
+      u = s.crossProduct(f)
+
+      new Matrix([s.a[0], u.a[0], -f.a[0], 0,
+                  s.a[1], u.a[1], -f.a[1], 0,
+                  s.a[2], u.a[2], -f.a[2], 0,
+                  0, 0, 0, 1]).translate(-eye[0],-eye[1], -eye[2])
+
   multiply: (b) ->
     mn = []
     for i in [0..3]
@@ -40,5 +55,3 @@ class @Matrix
           sum += @m[4*i+k] * b.m[4*k+j]
         mn[i*4+j] = sum
     new Matrix(mn)
-
-  array: -> new Float32Array(@m)

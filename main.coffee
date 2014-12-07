@@ -6,51 +6,49 @@ $ ->
 
   program.addShader(gl.VERTEX_SHADER,'''
       attribute vec4 a_Position;
-      attribute vec2 a_TexCoord;
-      varying vec2 v_TexCoord;
-      uniform mat4 u_ModelMatrix;
+      attribute vec4 a_Color;
+      uniform mat4 u_ViewMatrix;
+      varying vec4 v_Color;
       void main() {
-        gl_Position = u_ModelMatrix * a_Position;
-        v_TexCoord = a_TexCoord;
+        gl_Position = u_ViewMatrix * a_Position;
+        v_Color = a_Color;
       }
     ''')
 
   program.addShader(gl.FRAGMENT_SHADER,'''
       precision mediump float;
-      uniform sampler2D u_Sampler0;
-      uniform sampler2D u_Sampler1;
-      varying vec2 v_TexCoord;
+      varying vec4 v_Color;
       void main() {
-        vec4 color0 = texture2D(u_Sampler0, v_TexCoord);
-        vec4 color1 = texture2D(u_Sampler1, v_TexCoord);
-        gl_FragColor = color0 * color1;
+        gl_FragColor = v_Color;
       }
     ''')
 
   program.activate()
 
   vertices =
-    data: [-0.5,  0.5, 0.0, 1.0,
-           -0.5, -0.5, 0.0, 0.0,
-            0.5,  0.5, 1.0, 1.0,
-            0.5, -0.5, 1.0, 0.0 ]
-    stride: 4
+    data: [ 0.0,  0.5, -0.4, 0.4, 1.0, 0.4,  # back green triangle
+           -0.5, -0.5, -0.4, 0.4, 1.0, 0.4,
+            0.5, -0.5, -0.4, 1.0, 0.4, 0.4,
+            0.5,  0.4, -0.2, 1.0, 0.4, 0.4,  # middle yellow triangle
+           -0.5,  0.4, -0.2, 1.0, 1.0, 0.4,
+            0.0, -0.6, -0.2, 1.0, 1.0, 0.4,
+            0.0,  0.5,  0.0, 0.4, 0.4, 1.0,  # front blue triangle
+           -0.5, -0.5,  0.0, 0.4, 0.4, 1.0,
+            0.5, -0.5,  0.0, 1.0, 0.4, 0.4]
+    stride: 6
     pointers:[
-      {name: 'a_Position', dim: 2, offset: 0},
-      {name: 'a_TexCoord', dim: 2, offset: 2}]
+      {name: 'a_Position', dim: 3, offset: 0},
+      {name: 'a_Color',    dim: 3, offset: 3}]
     uniforms:[]
-    textures:[
-      {url: 'sky.JPG',    sampler:'u_Sampler0'},
-      {url: 'circle.gif', sampler:'u_Sampler1'}]
+    textures:[]
 
   model = new Model(vertices,gl,program)
 
   model.animate = (elapsed) ->
-    angle = (45 * elapsed / 1000.0) % 360
-    m = Matrix.rotation(angle,0,0,1).translate(0.35,0,0)
-    program.setUniformMatrix 'u_ModelMatrix', m.array()
+    view = Matrix.lookAt([0.20, 0.25, 0.25],[0,0,0],[0,1,0])
+    program.setUniformMatrix('u_ViewMatrix', view.array())
 
-  model.draw = -> gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+  model.draw = -> gl.drawArrays(gl.TRIANGLES, 0, 9)
 
   engine = new Engine(gl)
   engine.addModel(model)
