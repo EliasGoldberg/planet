@@ -44,14 +44,21 @@ $ ->
 
   model = new Model(vertices,gl,program)
 
+  eyeX = 0.20
   model.animate = (elapsed) ->
-    view = Matrix.lookAt([0.20, 0.25, 0.25],[0,0,0],[0,1,0])
+    view = Matrix.lookAt([eyeX, 0.25, 0.25],[0,0,0],[0,1,0])
 
     angle = (elapsed * -10 / 1000) % 360
     model = Matrix.rotation(angle,0,0,1)
 
     program.setUniformMatrix('u_ModelViewMatrix', view.multiply(model).array())
 
+  document.onkeydown = (ev) ->
+    if ev.keyCode is 39
+      eyeX += 0.01
+    else if ev.keyCode is 37
+      eyeX -= 0.01
+      
   model.draw = -> gl.drawArrays(gl.TRIANGLES, 0, 9)
 
   engine = new Engine(gl)
