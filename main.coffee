@@ -7,11 +7,10 @@ $ ->
   program.addShader(gl.VERTEX_SHADER,'''
       attribute vec4 a_Position;
       attribute vec4 a_Color;
-      uniform mat4 u_ViewMatrix;
-      uniform mat4 u_ModelMatrix;
+      uniform mat4 u_ModelViewMatrix;
       varying vec4 v_Color;
       void main() {
-        gl_Position = u_ViewMatrix * u_ModelMatrix * a_Position;
+        gl_Position = u_ModelViewMatrix * a_Position;
         v_Color = a_Color;
       }
     ''')
@@ -47,11 +46,11 @@ $ ->
 
   model.animate = (elapsed) ->
     view = Matrix.lookAt([0.20, 0.25, 0.25],[0,0,0],[0,1,0])
-    program.setUniformMatrix('u_ViewMatrix', view.array())
 
-    angle = (elapsed * 45 / 1000) % 360
+    angle = (elapsed * -10 / 1000) % 360
     model = Matrix.rotation(angle,0,0,1)
-    program.setUniformMatrix('u_ModelMatrix', model.array())
+
+    program.setUniformMatrix('u_ModelViewMatrix', view.multiply(model).array())
 
   model.draw = -> gl.drawArrays(gl.TRIANGLES, 0, 9)
 
