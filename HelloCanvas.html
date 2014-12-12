@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<title>HelloCanvas</title>
+
+<xmp theme="united" style="display:none;">
+<style>
+.bs-callout {
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #eee;
+    border-left-width: 5px;
+    border-radius: 3px;
+}
+.bs-callout h4 {
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+.bs-callout p:last-child {
+    margin-bottom: 0;
+}
+.bs-callout code {
+    border-radius: 3px;
+}
+.bs-callout+.bs-callout {
+    margin-top: -5px;
+}
+.bs-callout-danger {
+    border-left-color: #d9534f;
+}
+.bs-callout-danger h4 {
+    color: #d9534f;
+}
+</style>
+## How simple can you get?
+
+For our purposes, the simplest possible program is the shortest one that causes some observable change to take place.  It indicates that the development environment has been set up at least somewhat correctly, and is usually the first baby step down the road to whatever the programmer has set out to achieve.  
+
+In many cases, that simple program is "Hello World."  Not in WebGL.  WebGL is so low level and specialized that the very first program in the WebGL Programming Guide simply changes the background color of a canvas.  My version of the program is below, along with the output.
+
+### HelloCanvas.html
+
+```
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>threeDee</title>
+    </head>
+    <body>
+      <canvas id='gl'
+              style='width:400px; height:300px;
+                     border: solid 1px black;' />
+      <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+      <script src="http://coffeescript.org/extras/coffee-script.js"></script>
+      <script type="text/coffeescript">
+        $ =>
+          canvas = document.getElementById('gl')
+          gl = canvas.getContext('webgl')
+          gl.clearColor(0.0,0.0,0.0,1.0)
+          gl.clear(gl.COLOR_BUFFER_BIT)
+      </script>
+    </body>
+  </html>
+```
+
+## The Output
+
+<canvas id='gl' style='width:400px; height:300px; border: solid 1px black;'></canvas>
+                   
+## Overview
+
+This program defines a single visible `canvas` element, loads two third party libraries, and defines a five line coffeescript method that runs when the web page has finished loading.  If the code works, we see a solid black box.  If the code is broken, we see a black rectangular outline around a white background.
+
+We load the jquery library in line 11 to gain access to the ubiquious $ method.  In line 12 we load the coffee-script library.  This gives us the ability to write in-line coffeescript using the `script` element with a type of `text/coffeescript`.
+
+## The CoffeeScript
+
+On line 14, the cryptic `$ =>` calls the `$` jquery method and passes the next four lines as an annoymous method to be called when the document is ready.  The equivelant javascript would read:
+
+```
+  document.onready(function() {
+    canvas = document.getElementById('gl');
+    gl = canvas.getContext('webgl');
+    gl.clearColor(0.0,0.0,0.0,1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+  });
+```
+
+Using jquery's `$` method is much shorter.
+
+```
+  $(function() {
+    canvas = document.getElementById('gl');
+    gl = canvas.getContext('webgl');
+    gl.clearColor(0.0,0.0,0.0,1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+  });
+```
+
+Changing from javascript to coffeescript changes the method syntax and removes the semicolons and curly braces.  In coffeescript, scope is determined entirely by indention.
+
+```
+  $( () => 
+    canvas = document.getElementById('gl')
+    gl = canvas.getContext('webgl')
+    gl.clearColor(0.0,0.0,0.0,1.0)
+    gl.clear(gl.COLOR_BUFFER_BIT)
+  )
+```
+
+In coffeescript the empty parentheses of a method that has no parameters is redundant.
+
+```
+  $( => 
+    canvas = document.getElementById('gl')
+    gl = canvas.getContext('webgl')
+    gl.clearColor(0.0,0.0,0.0,1.0)
+    gl.clear(gl.COLOR_BUFFER_BIT)
+  )
+```
+
+The parantheses associated with the $ method are also redundant.  In coffeescript, for example, `gl.clear(gl.COLOR_BUFFER_BIT)` can also be written `gl.clear gl.COLOR_BUFFER_BIT`.  This leaves us with the code as it is written in the program.
+
+```
+  $ => 
+    canvas = document.getElementById('gl')
+    gl = canvas.getContext('webgl')
+    gl.clearColor(0.0,0.0,0.0,1.0)
+    gl.clear(gl.COLOR_BUFFER_BIT)
+```
+
+The annonymous method first gets a reference to the canvas element defined in lines eight through ten.
+
+<div class="bs-callout bs-callout-danger">
+<h4>GOTCHA</h4>
+Getting a reference to the canvas via `$('#gl')` DOES NOT WORK.  Although a reference is returned, it will not have a `getContext` method defined.
+</div>
+
+Next, we use getContext to aquire the canvas's WebGL Context.  The context is simply an on object whose methods give us access to the OpenGL state machine.  With it, we can send commands to the graphics hardware and create 3D environments.
+
+<div class="bs-callout bs-callout-danger">
+<h4>GOTCHA</h4>
+Different browsers seem to expect different strings as parameters to the `getContext` method.  The 3rd party library used in the WebGL Programming Guide loop through several different strings until a valid context is returned.  I tried 'webgl' in the lastest versions of Chrome, Firefox, Safari, and Internet Explorer and they all worked.  If you are failing to get a valid context, try a different string.
+</div>
+
+Now that we have access to this vast power, we use it to do the most trivial thing possible.  Calling `gl.clearColor(0.0,0.0,0.0,1.0)` sets the default background color to black.  Calling `gl.clear(gl.COLOR_BUFFER_BIT)` sets every pixel to that color.  You can think of `gl.clearColor` as dipping a paintbrush in paint, and `gl.clear` as actually using the paintbrush to paint over the entire canvas, erasing whatever may have been there before.
+
+## Changes
+
+### Third Party Libraries
+
+I chose not to use the utilities libraries from the WebGL Programming Guide's sample code.  One of my main purposes in writing this code was to learn WebGL.  It didn't make sense to me to use third party code that obscured the very details that I was trying to learn.
+
+So, instead of using the `getWebGLContext` method in cuon-utils.js, I called my canvas's `getContext` method directly.
+
+### Error handling
+
+So, what's the difference between `getWebGLContext` and `getContext`?  Basically just error handling. getWebGLContext looks like this:
+
+```
+  function getWebGLContext(canvas, opt_debug) {
+    // Get the rendering context for WebGL
+    var gl = WebGLUtils.setupWebGL(canvas);
+    if (!gl) return null;
+  
+    // if opt_debug is explicitly false, create the context for debugging
+    if (arguments.length < 2 || opt_debug) {
+      gl = WebGLDebugUtils.makeDebugContext(gl);
+    }
+  
+    return gl;
+  }
+```
+</xmp>
+<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="http://coffeescript.org/extras/coffee-script.js"></script>
+<script type="text/coffeescript">
+  $ =>
+    canvas = document.getElementById('gl')
+    gl = canvas.getContext('webgl')
+    gl.clearColor(0.0,0.0,0.0,1.0)
+    gl.clear(gl.COLOR_BUFFER_BIT)
+</script>
+<script src="http://strapdownjs.com/v/0.2/strapdown.js"></script>
+</html>
