@@ -49,14 +49,14 @@ In many cases, that simple program is "Hello World."  Not in WebGL.  WebGL is so
     <body>
       <canvas id='gl'
               style='width:400px; height:300px;
-                     border: solid 1px black;' />
+                     border: solid 1px black;'></canvas>
       <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
       <script src="http://coffeescript.org/extras/coffee-script.js"></script>
       <script type="text/coffeescript">
         $ =>
           canvas = document.getElementById('gl')
           gl = canvas.getContext('webgl')
-          gl.clearColor(0.0,0.0,0.0,1.0)
+          gl.clearColor(0.84,0.27,0.08,1.0)
           gl.clear(gl.COLOR_BUFFER_BIT)
       </script>
     </body>
@@ -69,7 +69,7 @@ In many cases, that simple program is "Hello World."  Not in WebGL.  WebGL is so
                    
 ## Overview
 
-This program defines a single visible `canvas` element, loads two third party libraries, and defines a five line coffeescript method that runs when the web page has finished loading.  If the code works, we see a solid black box.  If the code is broken, we see a black rectangular outline around a white background.
+This program defines a single visible `canvas` element, loads two third party libraries, and defines a five line coffeescript method that runs when the web page has finished loading.  If the code works, we see a solid orange box.  If the code is broken, we see a black rectangular outline around a white background.
 
 We load the jquery library in line 11 to gain access to the ubiquious $ method.  In line 12 we load the coffee-script library.  This gives us the ability to write in-line coffeescript using the `script` element with a type of `text/coffeescript`.
 
@@ -81,7 +81,7 @@ On line 14, the cryptic `$ =>` calls the `$` jquery method and passes the next f
   document.onready(function() {
     canvas = document.getElementById('gl');
     gl = canvas.getContext('webgl');
-    gl.clearColor(0.0,0.0,0.0,1.0);
+    gl.clearColor(0.84,0.27,0.08,1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
   });
 ```
@@ -92,7 +92,7 @@ Using jquery's `$` method is much shorter.
   $(function() {
     canvas = document.getElementById('gl');
     gl = canvas.getContext('webgl');
-    gl.clearColor(0.0,0.0,0.0,1.0);
+    gl.clearColor(0.84,0.27,0.08,1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
   });
 ```
@@ -103,7 +103,7 @@ Changing from javascript to coffeescript changes the method syntax and removes t
   $( () => 
     canvas = document.getElementById('gl')
     gl = canvas.getContext('webgl')
-    gl.clearColor(0.0,0.0,0.0,1.0)
+    gl.clearColor(0.84,0.27,0.08,1.0)
     gl.clear(gl.COLOR_BUFFER_BIT)
   )
 ```
@@ -114,7 +114,7 @@ In coffeescript the empty parentheses of a method that has no parameters is redu
   $( => 
     canvas = document.getElementById('gl')
     gl = canvas.getContext('webgl')
-    gl.clearColor(0.0,0.0,0.0,1.0)
+    gl.clearColor(0.84,0.27,0.08,1.0)
     gl.clear(gl.COLOR_BUFFER_BIT)
   )
 ```
@@ -125,7 +125,7 @@ The parantheses associated with the $ method are also redundant.  In coffeescrip
   $ => 
     canvas = document.getElementById('gl')
     gl = canvas.getContext('webgl')
-    gl.clearColor(0.0,0.0,0.0,1.0)
+    gl.clearColor(0.84,0.27,0.08,1.0)
     gl.clear(gl.COLOR_BUFFER_BIT)
 ```
 
@@ -143,7 +143,7 @@ Next, we use getContext to aquire the canvas's WebGL Context.  The context is si
 Different browsers seem to expect different strings as parameters to the `getContext` method.  The 3rd party library used in the WebGL Programming Guide loop through several different strings until a valid context is returned.  I tried 'webgl' in the lastest versions of Chrome, Firefox, Safari, and Internet Explorer and they all worked.  If you are failing to get a valid context, try a different string.
 </div>
 
-Now that we have access to this vast power, we use it to do the most trivial thing possible.  Calling `gl.clearColor(0.0,0.0,0.0,1.0)` sets the default background color to black.  Calling `gl.clear(gl.COLOR_BUFFER_BIT)` sets every pixel to that color.  You can think of `gl.clearColor` as dipping a paintbrush in paint, and `gl.clear` as actually using the paintbrush to paint over the entire canvas, erasing whatever may have been there before.
+Now that we have access to this vast power, we use it to do the most trivial thing possible.  Calling `gl.clearColor(0.84,0.27,0.08,1.0)` sets the default background color to orange.  Calling `gl.clear(gl.COLOR_BUFFER_BIT)` sets every pixel to that color.  You can think of `gl.clearColor` as dipping a paintbrush in paint, and `gl.clear` as actually using the paintbrush to paint over the entire canvas, erasing whatever may have been there before.
 
 ## Changes
 
@@ -155,7 +155,7 @@ So, instead of using the `getWebGLContext` method in cuon-utils.js, I called my 
 
 ### Error handling
 
-So, what's the difference between `getWebGLContext` and `getContext`?  Basically just error handling. getWebGLContext looks like this:
+So, what's the difference between `getWebGLContext` and `getContext`?  Basically just error handling. Here's what `getWebGLContext` looks like:
 
 ```
   function getWebGLContext(canvas, opt_debug) {
@@ -171,15 +171,91 @@ So, what's the difference between `getWebGLContext` and `getContext`?  Basically
     return gl;
   }
 ```
+
+The only meaningful line of code in here is `var gl = WebGLUtils.setupWebGL(canvas)`, which is simply a call to a different third party library method in webgl-utils.js.  The line `if (!gl) return null` does what exactly?  If `gl` is `undefined` or `null` or `false` then return `null`?  How is this better than returning `gl` directly?  
+
+The call to `WebGLDebugUtils.makeDebugContext` wraps the webgl context in such a way that WebGL errors get logged to the browser console.  In Chrome, this seems to happen anyway.  Since Chrome is the browser I'm using to debug and test, calling `WebGLDebugUtils.makeDebugContext` is not needed.
+
+Even though I'm not calling `WebGLUtils.setupWebGL`, it's worthwhile to drill down to see what's going on.
+
+```
+	var setupWebGL = function(canvas, opt_attribs, opt_onError) {
+	  function handleCreationError(msg) {
+		  var container = document.getElementsByTagName("body")[0];
+		//var container = canvas.parentNode;
+		if (container) {
+		  var str = window.WebGLRenderingContext ?
+			   OTHER_PROBLEM :
+			   GET_A_WEBGL_BROWSER;
+		  if (msg) {
+			str += "<br/><br/>Status: " + msg;
+		  }
+		  container.innerHTML = makeFailHTML(str);
+		}
+	  };
+
+	  opt_onError = opt_onError || handleCreationError;
+
+	  if (canvas.addEventListener) {
+		canvas.addEventListener("webglcontextcreationerror", function(event) {
+			  opt_onError(event.statusMessage);
+			}, false);
+	  }
+	  var context = create3DContext(canvas, opt_attribs);
+	  if (!context) {
+		if (!window.WebGLRenderingContext) {
+		  opt_onError("");
+		} else {
+		  opt_onError("");
+		}
+	  }
+
+	  return context;
+	};
+``` 
+
+This method is, again, mostly error handling.  The real meat is the line `var context = create3DContext(canvas, opt_attribs)` which refers to yet another third party library method.
+
+```
+	var create3DContext = function(canvas, opt_attribs) {
+	  var names = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
+	  var context = null;
+	  for (var ii = 0; ii < names.length; ++ii) {
+		try {
+		  context = canvas.getContext(names[ii], opt_attribs);
+		} catch(e) {}
+		if (context) {
+		  break;
+		}
+	  }
+	  return context;
+	}
+```
+
+This method finally does something meaningful.  It loops through four different strings and passes them each to the `canvas.getContext` until it gets a valid context.  So that's how I knew which string to pass, and if passing 'webgl' doesn't work for you, try one of the others.
+
+I feel comfortable stripping out all the error handling because this is not production code.  If you wanted to provide some kind of support for older browsers, you could do something like this:
+
+```
+  $ =>
+    canvas = document.getElementById('gl')
+    ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"].find (s) -> (@gl = canvas.getContext s)?
+    if !gl? then $("#gl").after('<div>Your browser does not support WebGL</div>'); return
+    gl.clearColor(0.84,0.27,0.08,1.0)
+    gl.clear(gl.COLOR_BUFFER_BIT)
+```
+
+I think this code is compact, but makes the program less clear.  Since I can get the same result without it, I left it out.
+
 </xmp>
 <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="http://coffeescript.org/extras/coffee-script.js"></script>
 <script type="text/coffeescript">
-  $ =>
-    canvas = document.getElementById('gl')
-    gl = canvas.getContext('webgl')
-    gl.clearColor(0.0,0.0,0.0,1.0)
-    gl.clear(gl.COLOR_BUFFER_BIT)
+$ =>
+  canvas = document.getElementById('gl')
+  gl = canvas.getContext('webgl')
+  gl.clearColor(0.84,0.27,0.08,1.0)
+  gl.clear(gl.COLOR_BUFFER_BIT)
 </script>
 <script src="http://strapdownjs.com/v/0.2/strapdown.js"></script>
 </html>
