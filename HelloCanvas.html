@@ -245,7 +245,127 @@ I feel comfortable stripping out all the error handling because this is not prod
     gl.clear(gl.COLOR_BUFFER_BIT)
 ```
 
-I think this code is compact, but makes the program less clear.  Since I can get the same result without it, I left it out.
+These two lines declare an array of all the possible strings to pass to `canvas.getContext` and immediately calls the array's find method.  The find method passes each element to the provided anonymous function and returns as soon as the function returns true.  The iterative JavaScript equivalent of these two lines would look something like this.
+
+```
+  var gl = null;
+  var possibleStrings = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
+  for (var i=0; i<possibleStrings.length; i++) {
+    var s = possibleStrings[i];
+	gl = canvas.getContext(s);
+	if (gl != null) break;
+  }
+  if (gl == null) {
+	$("#gl").after('<div>Your browser does not support WebGL</div>');
+	return;
+  }
+```
+
+Later versions of JavaScript provide the `find` method which loops through elements of an array and returns the first element that satisfies some condition.  The condition is determined by a function you pass in.  The `find` method passes each element of the array to your method, which performs some operation on it and returns true or false.  As soon as your function returns true, the `find` method terminates.
+
+```
+  var gl = null;
+  var possibleStrings = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
+  possibleStrings.find(function (s) {
+	gl = canvas.getContext(s);
+	return (gl == null);
+  });
+  if (gl == null) {
+	$("#gl").after('<div>Your browser does not support WebGL</div>');
+	return;
+  }
+```
+
+Converting to CoffeeScript but keeping the same structure looks like this:
+
+```
+  gl = null
+  possibleStrings = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"]
+  possibleStrings.find( (s) -> 
+	gl = canvas.getContext(s)
+	return (gl == null)
+  )
+  if gl == null
+	$("#gl").after('<div>Your browser does not support WebGL</div>')
+	return
+```
+
+CoffeeScript defines an existence operator `?` which we can use instead of `== null`.
+
+```
+  gl = null
+  possibleStrings = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"]
+  possibleStrings.find( (s) -> 
+	gl = canvas.getContext(s)
+	return gl?
+  )
+  if !gl?
+	$("#gl").after('<div>Your browser does not support WebGL</div>')
+	return
+```
+
+Since CoffeeScript methods automatically return their last lines, and since assignments are expressions that return the value assigned, we can combine the two lines of the anonymous function.
+
+```
+  gl = null
+  possibleStrings = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"]
+  possibleStrings.find( (s) -> 
+	(gl = canvas.getContext(s))?
+  )
+  if !gl?
+	$("#gl").after('<div>Your browser does not support WebGL</div>')
+	return
+```
+
+Now the `find` method call is short enough to be a one liner.
+
+```
+  gl = null
+  possibleStrings = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"]
+  possibleStrings.find( (s) -> (gl = canvas.getContext(s))?)
+  if !gl?
+	$("#gl").after('<div>Your browser does not support WebGL</div>')
+	return
+```
+
+Those nested parentheses are kind of ugly, so I remove the ones belonging to the `find` method and the `getContext` method.
+
+```
+  gl = null
+  possibleStrings = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"]
+  possibleStrings.find (s) -> (gl = canvas.getContext s)?
+  if !gl?
+	$("#gl").after('<div>Your browser does not support WebGL</div>')
+	return
+```
+
+Depending on how much screen width your development environment has, you may be able to get rid of the `possibleStrings` variable and combine the array declaration and the `find` method call into one line.
+
+```
+  gl = null
+  ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"].find (s) -> (gl = canvas.getContext s)?
+  if !gl?
+	$("#gl").after('<div>Your browser does not support WebGL</div>')
+	return
+```
+
+CoffeeScript provides a really neat `@` operator, which attaches a variable to the current `this` context.  We can use it to get rid of the declaration of `gl` at the beginning of the code snippet.
+
+```
+  ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"].find (s) -> (@gl = canvas.getContext s)?
+  if !gl?
+	$("#gl").after('<div>Your browser does not support WebGL</div>')
+	return
+```
+
+Since we've already got one pretty long line, we may as well combine the if statement into one line as well.  CoffeeScript doesn't require semicolons at the end of each line, but you can still use them to put multiple statements on one line.
+
+```
+  ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"].find (s) -> (@gl = canvas.getContext s)?
+  if !gl? then $("#gl").after('<div>Your browser does not support WebGL</div>'); return
+```
+
+So now we have two nicely compact lines of code, but they're pretty complex.  I didn't like the more verbose version because I felt that it caused the error handling to overwhelm the code that actually did something.  But the two line version might be kind of hard to understand, which defeats the purpose of writing example code in the first place.  Since my program did not depend on this code to function, I ended up just leaving it out.
 
 </xmp>
 <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
