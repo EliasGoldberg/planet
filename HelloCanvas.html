@@ -374,7 +374,7 @@ So now we have two nicely compact lines of code, but they're pretty complex.  I 
 <script type="text/coffeescript">
 $ =>
   canvas = document.getElementById('gl')
-  ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"].find (s) -> (@gl = canvas.getContext s)?
+  _.find ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"], (s) -> (@gl = canvas.getContext s)?
   if !gl? then $("#gl").after('<div>Your browser does not support WebGL</div>'); return
   gl.clearColor(0.84,0.27,0.08,1.0)
   gl.clear(gl.COLOR_BUFFER_BIT)
