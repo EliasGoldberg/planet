@@ -58,7 +58,7 @@ $ ->
       eyeX += 0.01
     else if ev.keyCode is 37
       eyeX -= 0.01
-      
+
   model.draw = -> gl.drawArrays(gl.TRIANGLES, 0, 9)
 
   engine = new Engine(gl)

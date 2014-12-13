@@ -46,6 +46,15 @@ class @Matrix
                 s.a[2], u.a[2], -f.a[2], 0,
                 0, 0, 0, 1]).translate(-eye[0],-eye[1], -eye[2])
 
+  @ortho: (l, r, b, t, n, f) ->
+    rw = 1 / (r - l)
+    rh = 1 / (t - b)
+    rd = 1 / (f - n)
+    new Matrix([         2*rw,            0,              0, 0,
+                            0,         2*rh,              0, 0,
+                            0,             0,         -2*rd, 0,
+                -(r + l) * rw, -(t + b) * rh, -(f + n) * rd, 1])
+
   multiply: (b) ->
     mn = []
     for i in [0..3]
