@@ -22,7 +22,7 @@ $ ->
         gl_FragColor = v_Color;
       }
     ''')
-
+    
   program.activate()
 
   vertices =
@@ -44,20 +44,22 @@ $ ->
 
   model = new Model(vertices,gl,program)
 
-  eyeX = 0.20
+  near = 0.0; far = 0.5
   model.animate = (elapsed) ->
-    view = Matrix.lookAt([eyeX, 0.25, 0.25],[0,0,0],[0,1,0])
-
+    #view = Matrix.lookAt([eyeX, 0.25, 0.25],[0,0,0],[0,1,0])
+    view = Matrix.ortho(-1,1,-1,1,near,far)
     angle = (elapsed * -10 / 1000) % 360
     model = Matrix.rotation(angle,0,0,1)
 
     program.setUniformMatrix('u_ModelViewMatrix', view.multiply(model).array())
 
   document.onkeydown = (ev) ->
-    if ev.keyCode is 39
-      eyeX += 0.01
-    else if ev.keyCode is 37
-      eyeX -= 0.01
+    switch ev.keyCode
+      when 39 then near += 0.01
+      when 37 then near -= 0.01
+      when 38 then far  += 0.01
+      when 40 then far  -= 0.01
+    $('#msg').html("near: #{near} far: #{far}")
 
   model.draw = -> gl.drawArrays(gl.TRIANGLES, 0, 9)
 
