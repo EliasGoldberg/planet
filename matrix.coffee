@@ -53,7 +53,7 @@ class @Matrix
     new Matrix([         2*rw,            0,              0, 0,
                             0,         2*rh,              0, 0,
                             0,             0,         -2*rd, 0,
-                -(r + l) * rw, -(t + b) * rh, (f + n) * rd, 1])
+                -(r + l) * rw, -(t + b) * rh, -(f + n) * rd, 1])
 
   multiply: (b) ->
     mn = []
