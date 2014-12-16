@@ -55,6 +55,15 @@ class @Matrix
                             0,             0,         -2*rd, 0,
                 -(r + l) * rw, -(t + b) * rh, -(f + n) * rd, 1])
 
+  @perspective: (fovy, aspect, near, far) ->
+    fovy = Math.PI * fovy / 180 / 2
+    rd = 1 / (far -near)
+    ct = Math.cos(fovy)
+    new Matrix([ ct / aspect,  0,                    0,  0,
+                           0, ct,                    0,  0,
+                           0,  0,   -(far + near) * rd, -1,
+                           0,  0, -2 * near * far * rd,  0])
+  
   multiply: (b) ->
     mn = []
     for i in [0..3]
