@@ -7,10 +7,11 @@ $ ->
   program.addShader(gl.VERTEX_SHADER,'''
       attribute vec4 a_Position;
       attribute vec4 a_Color;
-      uniform mat4 u_ModelViewMatrix;
+      uniform mat4 u_ViewMatrix;
+      uniform mat4 u_ProjMatrix;
       varying vec4 v_Color;
       void main() {
-        gl_Position = u_ModelViewMatrix * a_Position;
+        gl_Position = u_ProjMatrix * u_ViewMatrix * a_Position;
         v_Color = a_Color;
       }
     ''')
@@ -26,15 +27,31 @@ $ ->
   program.activate()
 
   vertices =
-    data: [ 0.0,  0.5, -0.4, 0.4, 1.0, 0.4,  # back green triangle
-           -0.5, -0.5, -0.4, 0.4, 1.0, 0.4,
-            0.5, -0.5, -0.4, 1.0, 0.4, 0.4,
-            0.5,  0.4, -0.2, 1.0, 0.4, 0.4,  # middle yellow triangle
-           -0.5,  0.4, -0.2, 1.0, 1.0, 0.4,
-            0.0, -0.6, -0.2, 1.0, 1.0, 0.4,
-            0.0,  0.5,  0.0, 0.4, 0.4, 1.0,  # front blue triangle
-           -0.5, -0.5,  0.0, 0.4, 0.4, 1.0,
-            0.5, -0.5,  0.0, 1.0, 0.4, 0.4]
+    data: [ 0.75,  1.0, -4.0, 0.4, 1.0, 0.4,        # green right back
+            0.25, -1.0, -4.0, 0.4, 1.0, 0.4,
+            1.25, -1.0, -4.0, 1.0, 0.4, 0.4,
+            
+            0.75,  1.0, -2.0, 1.0, 1.0, 0.4,        # yellow right middle
+            0.25, -1.0, -2.0, 1.0, 1.0, 0.4,
+            1.25, -1.0, -2.0, 1.0, 0.4, 0.4,
+            
+            0.75,  1.0, 0.0, 0.4, 0.4, 1.0,         # blue right front
+            0.25, -1.0, 0.0, 0.4, 0.4, 1.0,
+            1.25, -1.0, 0.0, 1.0, 0.4, 0.4,
+            
+           -0.75,  1.0, -4.0, 0.4, 1.0, 0.4,        # green left back
+           -0.25, -1.0, -4.0, 0.4, 1.0, 0.4,
+           -1.25, -1.0, -4.0, 1.0, 0.4, 0.4,
+            
+           -0.75,  1.0, -2.0, 1.0, 1.0, 0.4,        # yellow left middle
+           -0.25, -1.0, -2.0, 1.0, 1.0, 0.4,
+           -1.25, -1.0, -2.0, 1.0, 0.4, 0.4,
+            
+           -0.75,  1.0, 0.0, 0.4, 0.4, 1.0,         # blue left front
+           -0.25, -1.0, 0.0, 0.4, 0.4, 1.0,
+           -1.25, -1.0, 0.0, 1.0, 0.4, 0.4]
+            
+            ]
     stride: 6
     pointers:[
       {name: 'a_Position', dim: 3, offset: 0},
@@ -46,12 +63,13 @@ $ ->
 
   near = 0.0; far = 0.5
   model.animate = (elapsed) ->
-    #view = Matrix.lookAt([eyeX, 0.25, 0.25],[0,0,0],[0,1,0])
-    view = Matrix.ortho(-1,1,-1,1,near,far)
+    view = Matrix.lookAt([eyeX, 0.25, 0.25],[0,0,0],[0,1,0])
+    proj = Matrix.perspective(30, canvas.width / canvas.height, 1, 100)
     angle = (elapsed * -10 / 1000) % 360
     model = Matrix.rotation(angle,0,0,1)
 
-    program.setUniformMatrix('u_ModelViewMatrix', view.multiply(model).array())
+    program.setUniformMatrix('u_ProjMatrix', proj.array())
+    program.setUniformMatrix('u_ViewMatrix', view.array())
 
   document.onkeydown = (ev) ->
     switch ev.keyCode
@@ -61,7 +79,7 @@ $ ->
       when 40 then far  -= 0.01
     $('#msg').html("near: #{near} far: #{far}")
 
-  model.draw = -> gl.drawArrays(gl.TRIANGLES, 0, 9)
+  model.draw = -> gl.drawArrays(gl.TRIANGLES, 0, 18)
 
   engine = new Engine(gl)
   engine.addModel(model)
