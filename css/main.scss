@@ -3,6 +3,18 @@
 ---
 @charset "utf-8";
 
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Roboto Regular'), local('Roboto-Regular'), url(roboto-regular.woff) format('woff');
+}
+@font-face {
+  font-family: 'Roboto Slab';
+  font-style: normal;
+  font-weight: 100;
+  src: local('Roboto Slab Thin'), local('RobotoSlab-Thin'), url(roboto-slab.woff) format('woff');
+}
 
 
 // Our variables
