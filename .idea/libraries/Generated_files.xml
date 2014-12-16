@@ -1,0 +1,23 @@
+<component name="libraryTable">
+  <library name="Generated files" type="javaScript">
+    <properties>
+      <sourceFilesUrls>
+        <item url="file://$PROJECT_DIR$/matrix.js" />
+        <item url="file://$PROJECT_DIR$/main.js" />
+        <item url="file://$PROJECT_DIR$/vector.js" />
+        <item url="file://$PROJECT_DIR$/engine.js" />
+        <item url="file://$PROJECT_DIR$/model.js" />
+        <item url="file://$PROJECT_DIR$/shaderProgram.js" />
+      </sourceFilesUrls>
+    </properties>
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/matrix.js" />
+      <root url="file://$PROJECT_DIR$/main.js" />
+      <root url="file://$PROJECT_DIR$/vector.js" />
+      <root url="file://$PROJECT_DIR$/engine.js" />
+      <root url="file://$PROJECT_DIR$/model.js" />
+      <root url="file://$PROJECT_DIR$/shaderProgram.js" />
+    </CLASSES>
+    <SOURCES />
+  </library>
+</component>
