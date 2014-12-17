@@ -1,6 +1,5 @@
 $ ->
-  canvas = document.getElementById('gl')
-  gl = canvas.getContext('webgl')
+  gl = document.getElementById('gl').getContext('webgl')
 
   program = new ShaderProgram(gl)
 
@@ -59,20 +58,19 @@ $ ->
   }
   model = new Model(vertices,gl,program)
 
-  near = 0.0; far = 0.5
+  near = 1.0; far = 10.0
   model.animate = (elapsed) ->
     view = Matrix.lookAt([0, 0, 5],[0,0,-100],[0,1,0])
-    proj = Matrix.perspective(30, canvas.width / canvas.height, 1, 100)
-
+    proj = Matrix.perspective(30, gl.canvas.clientWidth  / gl.canvas.clientHeight, near, far)
     program.setUniformMatrix('u_ProjMatrix', proj.array())
     program.setUniformMatrix('u_ViewMatrix', view.array())
 
   document.onkeydown = (ev) ->
     switch ev.keyCode
-      when 39 then near += 0.01
-      when 37 then near -= 0.01
-      when 38 then far  += 0.01
-      when 40 then far  -= 0.01
+      when 39 then near += 1
+      when 37 then near -= 1
+      when 38 then far  += 1
+      when 40 then far  -= 1
     $('#msg').html("near: #{near} far: #{far}")
 
   model.draw = -> gl.drawArrays(gl.TRIANGLES, 0, 18)
