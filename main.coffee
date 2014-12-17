@@ -1,6 +1,7 @@
 $ ->
   gl = document.getElementById('gl').getContext('webgl')
-
+  gl.enable(gl.DEPTH_TEST)
+  
   program = new ShaderProgram(gl)
 
   program.addShader(gl.VERTEX_SHADER,'''
@@ -27,17 +28,17 @@ $ ->
   program.activate()
     
   vertices = {
-    data: [ 0.0,  1.0, -4.0, 0.4, 1.0, 0.4,        # green back
-           -0.5, -1.0, -4.0, 0.4, 1.0, 0.4,
-            0.5, -1.0, -4.0, 1.0, 0.4, 0.4,
+    data: [ 0.0,  1.0, 0.0, 0.4, 1.0, 0.4,        # green back
+           -0.5, -1.0, 0.0, 0.4, 1.0, 0.4,
+            0.5, -1.0, 0.0, 1.0, 0.4, 0.4,
             
             0.0,  1.0, -2.0, 1.0, 1.0, 0.4,        # yellow middle
            -0.5, -1.0, -2.0, 1.0, 1.0, 0.4,
             0.5, -1.0, -2.0, 1.0, 0.4, 0.4,
             
-            0.0,  1.0, 0.0, 0.4, 0.4, 1.0,         # blue front
-           -0.5, -1.0, 0.0, 0.4, 0.4, 1.0,
-            0.5, -1.0, 0.0, 1.0, 0.4, 0.4]
+            0.0,  1.0, -4.0, 0.4, 0.4, 1.0,         # blue front
+           -0.5, -1.0, -4.0, 0.4, 0.4, 1.0,
+            0.5, -1.0, -4.0, 1.0, 0.4, 0.4]
     stride: 6
     pointers: 
       [ {name: 'a_Position', dim: 3, offset: 0}
