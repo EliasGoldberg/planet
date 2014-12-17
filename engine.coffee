@@ -8,7 +8,7 @@ class @Engine
 
   tick: =>
     elapsed = Date.now() - @startTime
-    @gl.clear(@gl.COLOR_BUFFER_BIT)
+    @gl.clear(@gl.COLOR_BUFFER_BIT | @gl.DEPTH_BUFFER_BIT)
     for model in @models
       model.animate(elapsed)
       model.draw()
