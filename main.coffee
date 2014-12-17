@@ -26,7 +26,7 @@ $ ->
     
   program.activate()
 
-  vertices =
+  vertices = {
     data: [ 0.75,  1.0, -4.0, 0.4, 1.0, 0.4,        # green right back
             0.25, -1.0, -4.0, 0.4, 1.0, 0.4,
             1.25, -1.0, -4.0, 1.0, 0.4, 0.4,
@@ -40,33 +40,29 @@ $ ->
             1.25, -1.0, 0.0, 1.0, 0.4, 0.4,
             
            -0.75,  1.0, -4.0, 0.4, 1.0, 0.4,        # green left back
-           -0.25, -1.0, -4.0, 0.4, 1.0, 0.4,
-           -1.25, -1.0, -4.0, 1.0, 0.4, 0.4,
+           -1.25, -1.0, -4.0, 0.4, 1.0, 0.4,
+           -0.25, -1.0, -4.0, 1.0, 0.4, 0.4,
             
            -0.75,  1.0, -2.0, 1.0, 1.0, 0.4,        # yellow left middle
-           -0.25, -1.0, -2.0, 1.0, 1.0, 0.4,
-           -1.25, -1.0, -2.0, 1.0, 0.4, 0.4,
+           -1.25, -1.0, -2.0, 1.0, 1.0, 0.4,
+           -0.25, -1.0, -2.0, 1.0, 0.4, 0.4,
             
            -0.75,  1.0, 0.0, 0.4, 0.4, 1.0,         # blue left front
-           -0.25, -1.0, 0.0, 0.4, 0.4, 1.0,
-           -1.25, -1.0, 0.0, 1.0, 0.4, 0.4]
-            
-            ]
+           -1.25, -1.0, 0.0, 0.4, 0.4, 1.0,
+           -0.25, -1.0, 0.0, 1.0, 0.4, 0.4]
     stride: 6
-    pointers:[
-      {name: 'a_Position', dim: 3, offset: 0},
-      {name: 'a_Color',    dim: 3, offset: 3}]
-    uniforms:[]
-    textures:[]
-
+    pointers: 
+      [ {name: 'a_Position', dim: 3, offset: 0}
+        {name: 'a_Color',    dim: 3, offset: 3} ]
+    uniforms: []
+    textures: []
+  }
   model = new Model(vertices,gl,program)
 
   near = 0.0; far = 0.5
   model.animate = (elapsed) ->
-    view = Matrix.lookAt([eyeX, 0.25, 0.25],[0,0,0],[0,1,0])
+    view = Matrix.lookAt([0, 0, 5],[0,0,-100],[0,1,0])
     proj = Matrix.perspective(30, canvas.width / canvas.height, 1, 100)
-    angle = (elapsed * -10 / 1000) % 360
-    model = Matrix.rotation(angle,0,0,1)
 
     program.setUniformMatrix('u_ProjMatrix', proj.array())
     program.setUniformMatrix('u_ViewMatrix', view.array())
