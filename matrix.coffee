@@ -57,8 +57,8 @@ class @Matrix
 
   @perspective: (fovy, aspect, near, far) ->
     fovy = Math.PI * fovy / 180 / 2
-    rd = 1 / (far -near)
-    ct = Math.cos(fovy)
+    rd = 1 / (far - near)
+    ct = Math.cos(fovy) / Math.sin(fovy)
     new Matrix([ ct / aspect,  0,                    0,  0,
                            0, ct,                    0,  0,
                            0,  0,   -(far + near) * rd, -1,
