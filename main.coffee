@@ -27,18 +27,21 @@ $ ->
     
   program.activate()
     
-  vertices = {
-    data: [ 0.0,  1.0, 0.0, 0.4, 1.0, 0.4,        # green back
-           -0.5, -1.0, 0.0, 0.4, 1.0, 0.4,
-            0.5, -1.0, 0.0, 1.0, 0.4, 0.4,
-            
-            0.0,  1.0, -2.0, 1.0, 1.0, 0.4,        # yellow middle
-           -0.5, -1.0, -2.0, 1.0, 1.0, 0.4,
-            0.5, -1.0, -2.0, 1.0, 0.4, 0.4,
-            
-            0.0,  1.0, -4.0, 0.4, 0.4, 1.0,         # blue front
-           -0.5, -1.0, -4.0, 0.4, 0.4, 1.0,
-            0.5, -1.0, -4.0, 1.0, 0.4, 0.4]
+  cubeData = {
+    vertices: [ 1.0,  1.0,  1.0,  1.0, 1.0, 1.0,
+               -1.0,  1.0,  1.0,  1.0, 0.0, 1.0,
+               -1.0, -1.0,  1.0,  1.0, 0.0, 0.0,
+                1.0, -1.0,  1.0,  1.0, 1.0, 0.0,
+                1.0, -1.0, -1.0,  0.0, 1.0, 0.0,
+                1.0,  1.0, -1.0,  0.0, 1.0, 1.0,
+               -1.0,  1.0, -1.0,  0.0, 0.0, 1.0,
+               -1.0, -1.0, -1.0,  0.0, 0.0, 0.0]
+    indices:  [ 0, 1, 2, 0, 2, 3,
+                0, 3, 4, 0, 4, 5,
+                0, 5, 6, 0, 6, 1,
+                1, 6, 7, 1, 7, 2,
+                7, 4, 3, 7, 3, 2,
+                4, 7, 6, 4, 6, 5]
     stride: 6
     pointers: 
       [ {name: 'a_Position', dim: 3, offset: 0}
@@ -47,24 +50,17 @@ $ ->
     textures: []
   }
   
-  view = Matrix.lookAt([0, 0, 5],[0,0,-100],[0,1,0])
+  view = Matrix.lookAt([3, 3, 7],[0,0,0],[0,1,0])
   proj = Matrix.perspective(30, gl.canvas.clientWidth  / gl.canvas.clientHeight, 1, 100)
   program.setUniformMatrix('u_ProjMatrix', proj.array())
   program.setUniformMatrix('u_ViewMatrix', view.array())
   
-  leftTriangles = new Model(vertices,gl,program)
-  leftTriangles.animate = (elapsed) ->
-    model = Matrix.translation(-0.75,0,0)
+  cube = new Model(cubeData,gl,program)
+  cube.animate = (elapsed) ->
+    model = Matrix.rotation(elapsed * .1 % 360, 0,1,0)
     program.setUniformMatrix('u_ModelMatrix', model.array())
-  leftTriangles.draw = -> gl.drawArrays(gl.TRIANGLES, 0, 9)
-  
-  rightTriangles = new Model(vertices,gl,program)
-  rightTriangles.animate = (elapsed) ->
-    model = Matrix.translation(0.75,0,0)
-    program.setUniformMatrix('u_ModelMatrix', model.array())
-  rightTriangles.draw = -> gl.drawArrays(gl.TRIANGLES, 0, 9)
+  cube.draw = -> gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_BYTE, 0)
 
   engine = new Engine(gl)
-  engine.addModel(leftTriangles)
-  engine.addModel(rightTriangles)
+  engine.addModel(cube)
   engine.start()
