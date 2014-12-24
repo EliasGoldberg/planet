@@ -1,6 +1,7 @@
 $ ->
   gl = document.getElementById('gl').getContext('webgl')
   gl.enable(gl.DEPTH_TEST)
+  gl.clearColor(0.5,0.6,0.7,1.0)
   gl.getExtension('OES_standard_derivatives');
   
   program = new ShaderProgram(gl)
@@ -20,27 +21,23 @@ $ ->
 
   program.addShader(gl.FRAGMENT_SHADER,'''
       #extension GL_OES_standard_derivatives : enable
-      
       precision mediump float;
       varying vec3 v_Bary;
+
       float edgeFactor(){
         vec3 d = fwidth(v_Bary);
-        vec3 a3 = smoothstep(vec3(0.0), d*1.5, v_Bary);
+        vec3 a3 = smoothstep(vec3(0.0), 1.5*d, v_Bary);
         return min(min(a3.x, a3.y), a3.z);
       }
       
       void main() {
-        if(any(lessThan(v_Bary, vec3(0.01)))){
-          gl_FragColor.rgb = mix(vec3(0.0), vec3(0.5), edgeFactor());
-        } else {
-          gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);
-        }
+        gl_FragColor = vec4(mix(vec3(0.0), vec3(0.7, 0.6, 0.5), edgeFactor()),1.0);
       }
       ''')
     
   program.activate()
 
-  icosahedronData = {
+  octahedronData = {
     vertices: [0, 1, 0,  1, 0, 0,
                1, 0, 0,  0, 1, 0,
                0, 0, 1,  0, 0, 1,
@@ -68,13 +65,13 @@ $ ->
   proj = Matrix.perspective(30, gl.canvas.clientWidth  / gl.canvas.clientHeight, 1, 100)
   program.setUniformMatrix('u_ProjMatrix', proj.array())
   program.setUniformMatrix('u_ViewMatrix', view.array())
-  
-  icosahedron = new Model(icosahedronData,gl,program)
-  icosahedron.animate = (elapsed) ->
+
+  octahedron = new Model(octahedronData,gl,program)
+  octahedron.animate = (elapsed) ->
     model = Matrix.rotation(elapsed * .1 % 360, 0,1,0)
     program.setUniformMatrix('u_ModelMatrix', model.array())
-  icosahedron.draw = -> gl.drawElements(gl.TRIANGLES, 24, gl.UNSIGNED_BYTE, 0)
+  octahedron.draw = -> gl.drawElements(gl.TRIANGLES, 24, gl.UNSIGNED_BYTE, 0)
 
   engine = new Engine(gl)
-  engine.addModel(icosahedron)
+  engine.addModel(octahedron)
   engine.start()

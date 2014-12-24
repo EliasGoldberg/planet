@@ -2,7 +2,6 @@ class @Engine
   constructor: (@gl) ->
     @models = []
     @startTime = null
-    @gl.clearColor(0.0,0.0,0.0,1.0)
 
   addModel: (model) -> @models.push(model)
 
