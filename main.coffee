@@ -1,50 +1,65 @@
 $ ->
   gl = document.getElementById('gl').getContext('webgl')
   gl.enable(gl.DEPTH_TEST)
+  gl.getExtension('OES_standard_derivatives');
   
   program = new ShaderProgram(gl)
 
   program.addShader(gl.VERTEX_SHADER,'''
       attribute vec4 a_Position;
+      attribute vec3 a_Bary;
+      varying vec3 v_Bary;
       uniform mat4 u_ModelMatrix;
       uniform mat4 u_ViewMatrix;
       uniform mat4 u_ProjMatrix;
       void main() {
         gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
+        v_Bary = a_Bary;
       }
     ''')
 
   program.addShader(gl.FRAGMENT_SHADER,'''
+      #extension GL_OES_standard_derivatives : enable
+      
       precision mediump float;
-      void main() {
-        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+      varying vec3 v_Bary;
+      float edgeFactor(){
+        vec3 d = fwidth(v_Bary);
+        vec3 a3 = smoothstep(vec3(0.0), d*1.5, v_Bary);
+        return min(min(a3.x, a3.y), a3.z);
       }
-    ''')
+      
+      void main() {
+        if(any(lessThan(v_Bary, vec3(0.01)))){
+          gl_FragColor.rgb = mix(vec3(0.0), vec3(0.5), edgeFactor());
+        } else {
+          gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);
+        }
+      }
+      ''')
     
   program.activate()
-  
-  r = (1 + Math.sqrt 5) / 2
+
   icosahedronData = {
-    vertices: [-1,  r,  0,
-                1,  r,  0,
-               -1, -r,  0,
-                1, -r,  0,
-                0, -1,  r,
-                0,  1,  r,
-                0, -1, -r,
-                0,  1, -r,
-                r,  0, -1,
-                r,  0,  1,
-               -r,  0, -1,
-               -r,  0,  1]
+    vertices: [0, 1, 0,  1, 0, 0,
+               1, 0, 0,  0, 1, 0,
+               0, 0, 1,  0, 0, 1,
+              -1, 0, 0,  0, 1, 0,  
+               0, 0,-1,  0, 0, 1,
+               0,-1, 0,  1, 0, 0]
     indices: 
-      [0, 11,  5,  0,  5,  1,  0,  1,  7,  0,  7, 10,  0, 10, 11,
-       1,  5,  9,  5, 11,  4, 11, 10,  2, 10,  7,  6,  7,  1,  8,
-       3,  9,  4,  3,  4,  2,  3,  2,  6,  3,  6,  8,  3,  8,  9,
-       4,  9,  5,  2,  4, 11,  6,  2, 10,  8,  6,  7,  9,  8,  1]
-    stride: 3
+      [0, 1, 2, 
+       0, 2, 3,
+       0, 3, 4,
+       0, 4, 1,
+       5, 1, 2,
+       5, 2, 3,
+       5, 3, 4,
+       5, 4, 1]
+    stride: 6
     pointers:
-      [ { name: 'a_Position', dim: 3, offset: 0 } ]
+      [ { name: 'a_Position', dim: 3, offset: 0 }
+        { name: 'a_Bary',     dim: 3, offset: 3 } ]
     uniforms: []
     textures: []
   }
@@ -58,7 +73,7 @@ $ ->
   icosahedron.animate = (elapsed) ->
     model = Matrix.rotation(elapsed * .1 % 360, 0,1,0)
     program.setUniformMatrix('u_ModelMatrix', model.array())
-  icosahedron.draw = -> gl.drawElements(gl.TRIANGLES, 60, gl.UNSIGNED_BYTE, 0)
+  icosahedron.draw = -> gl.drawElements(gl.TRIANGLES, 24, gl.UNSIGNED_BYTE, 0)
 
   engine = new Engine(gl)
   engine.addModel(icosahedron)
