@@ -39,44 +39,31 @@ $ ->
     
   program.activate()
 
-  octahedronData = {
-    vertices: [0, 1, 0,  1, 0, 0,
-               1, 0, 0,  0, 1, 0,
-               0, 0, 1,  0, 0, 1,
-              -1, 0, 0,  0, 1, 0,  
-               0, 0,-1,  0, 0, 1,
-               0,-1, 0,  1, 0, 0]
-    indices: 
-      [0, 2, 1,
-       0, 3, 2,
-       0, 4, 3,
-       0, 1, 4,
-       5, 1, 2,
-       5, 2, 3,
-       5, 3, 4,
-       5, 4, 1]
-    stride: 6
-    pointers:
-      [ { name: 'a_Position', dim: 3, offset: 0 }
-        { name: 'a_Bary',     dim: 3, offset: 3 } ]
-    uniforms: []
-    textures: []
-  }
-  view = Matrix.lookAt([3, 3, 7],[0,0,0],[0,1,0])
+  view = Matrix.lookAt([0, 2, 7],[0,0,0],[0,1,0])
   proj = Matrix.perspective(30, gl.canvas.clientWidth  / gl.canvas.clientHeight, 1, 100)
   program.setUniformMatrix('u_ProjMatrix', proj.array())
   program.setUniformMatrix('u_ViewMatrix', view.array())
 
-  for i in [0..7]
-    octahedronData = tessellate(octahedronData,i)
-  for i in [0..31]
-    octahedronData = tessellate(octahedronData,i)
+  octahedron = new Model(gl,program)
 
-  octahedron = new Model(octahedronData,gl,program)
+  octahedron.addFaces([
+    new Face(new Vector([0, 1,0]), new Vector([ 0,0, 1]), new Vector([ 1,0, 0])),  # 0
+    new Face(new Vector([0, 1,0]), new Vector([-1,0, 0]), new Vector([ 0,0, 1])),  # 1
+    new Face(new Vector([0, 1,0]), new Vector([ 0,0,-1]), new Vector([-1,0, 0])),  # 2
+    new Face(new Vector([0, 1,0]), new Vector([ 1,0, 0]), new Vector([ 0,0,-1]))   # 3
+  ])
+
+  octahedron.addFaces([
+    new Face(new Vector([0,-1,0]), new Vector([ 1,0, 0]), new Vector([ 0,0, 1])),  # 4
+    new Face(new Vector([0,-1,0]), new Vector([ 0,0, 1]), new Vector([-1,0, 0])),  # 5
+    new Face(new Vector([0,-1,0]), new Vector([-1,0, 0]), new Vector([ 0,0,-1])),  # 6
+    new Face(new Vector([0,-1,0]), new Vector([ 0,0,-1]), new Vector([ 1,0, 0]))   # 7
+  ])
+
   octahedron.animate = (elapsed) ->
     model = Matrix.rotation(elapsed * 0.1 % 360, 0,1,0)
     program.setUniformMatrix('u_ModelMatrix', model.array())
-  octahedron.draw = -> gl.drawElements(gl.TRIANGLES, octahedron.model.indices.length, gl.UNSIGNED_BYTE, 0)
+  octahedron.draw = -> gl.drawElements(gl.TRIANGLES, octahedron.indices.length, gl.UNSIGNED_BYTE, 0)
 
   engine = new Engine(gl)
   engine.addModel(octahedron)
@@ -126,12 +113,3 @@ tessellate = (data,face) ->
   newPointers = []
   for p in data.pointers
     newPointers.push({name: p.name, dim: p.dim, offset: p.offset})
-
-  {
-    vertices: newVertices
-    indices: newIndices
-    stride: data.stride
-    pointers: newPointers
-    uniforms: []
-    textures: []
-  }
