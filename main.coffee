@@ -1,10 +1,11 @@
 $ ->
-  gl = document.getElementById('gl').getContext('webgl')
+  canvas = setCanvasSize()
+  gl = canvas.getContext('webgl')
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.CULL_FACE);
   gl.clearColor(0.5,0.6,0.7,1.0)
-  gl.getExtension('OES_standard_derivatives');
-  
+  gl.getExtension('OES_standard_derivatives')
+
   program = new ShaderProgram(gl)
 
   program.addShader(gl.VERTEX_SHADER,'''
@@ -36,13 +37,22 @@ $ ->
       //gl_FragColor = vec4(0.7, 0.6, 0.5, 1.0);
     }
   ''')
-    
+
   program.activate()
 
-  view = Matrix.lookAt([0, 2, 7],[0,0,0],[0,1,0])
-  proj = Matrix.perspective(30, gl.canvas.clientWidth  / gl.canvas.clientHeight, 1, 100)
-  program.setUniformMatrix('u_ProjMatrix', proj.array())
-  program.setUniformMatrix('u_ViewMatrix', view.array())
+  setSize = ->
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    view = Matrix.lookAt([0, 1, 7],[0,0,0],[0,1,0])
+    proj = Matrix.perspective(30, gl.canvas.clientWidth  / gl.canvas.clientHeight, 1, 100)
+    program.setUniformMatrix('u_ProjMatrix', proj.array())
+    program.setUniformMatrix('u_ViewMatrix', view.array())
+
+  setSize()
+
+  $(window).resize(->
+    setCanvasSize()
+    setSize()
+  )
 
   octahedron = new Model(gl,program)
 
@@ -68,6 +78,17 @@ $ ->
   engine = new Engine(gl)
   engine.addModel(octahedron)
   engine.start()
+
+setCanvasSize = ->
+  canvas = document.getElementById('gl')
+  devicePixelRatio = window.devicePixelRatio || 1
+  overdraw = 1
+  scale = devicePixelRatio * overdraw
+  canvas.width  = window.innerWidth  * scale
+  canvas.height = window.innerHeight * scale
+  canvas.style.width  = window.innerWidth  + "px"
+  canvas.style.height = window.innerHeight + "px"
+  canvas
 
 midpoint = (a, b) -> [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2]
 
