@@ -3,7 +3,7 @@ $ ->
   gl = canvas.getContext('webgl')
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.CULL_FACE);
-  gl.clearColor(0.5,0.6,0.7,1.0)
+  gl.clearColor(0.0,0.0,0.0,1.0)
   gl.getExtension('OES_standard_derivatives')
 
   program = new ShaderProgram(gl)
@@ -33,8 +33,9 @@ $ ->
     }
 
     void main() {
-      gl_FragColor = vec4(mix(vec3(0.0), vec3(0.7, 0.6, 0.5), edgeFactor()),1.0);
-      //gl_FragColor = vec4(0.7, 0.6, 0.5, 1.0);
+      vec3 faceColor = vec3(37.0/255.0, 45.0/255.0, 118.0/255.0);
+      vec3 wireColor = vec3(147.0/255.0, 149.0/255.0, 189.0/255.0);
+      gl_FragColor = vec4(mix(wireColor, faceColor, edgeFactor()),1.0);
     }
   ''')
 
