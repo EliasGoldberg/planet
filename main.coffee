@@ -56,20 +56,15 @@ $ ->
   )
 
   octahedron = new Model(gl,program)
-
-  octahedron.addFaces([
-    new Face(new Vector([0, 1,0]), new Vector([ 0,0, 1]), new Vector([ 1,0, 0])),  # 0
-    new Face(new Vector([0, 1,0]), new Vector([-1,0, 0]), new Vector([ 0,0, 1])),  # 1
-    new Face(new Vector([0, 1,0]), new Vector([ 0,0,-1]), new Vector([-1,0, 0])),  # 2
-    new Face(new Vector([0, 1,0]), new Vector([ 1,0, 0]), new Vector([ 0,0,-1]))   # 3
-  ])
-
-  octahedron.addFaces([
-    new Face(new Vector([0,-1,0]), new Vector([ 1,0, 0]), new Vector([ 0,0, 1])),  # 4
-    new Face(new Vector([0,-1,0]), new Vector([ 0,0, 1]), new Vector([-1,0, 0])),  # 5
-    new Face(new Vector([0,-1,0]), new Vector([-1,0, 0]), new Vector([ 0,0,-1])),  # 6
-    new Face(new Vector([0,-1,0]), new Vector([ 0,0,-1]), new Vector([ 1,0, 0]))   # 7
-  ])
+  octaFaces = [ new Face(new Vector([0, 1,0]), new Vector([ 0, 0, 1]), new Vector([ 1, 0, 0])),  # 0
+                new Face(new Vector([0, 1,0]), new Vector([-1, 0, 0]), new Vector([ 0, 0, 1])),  # 1
+                new Face(new Vector([0, 1,0]), new Vector([ 0, 0,-1]), new Vector([-1, 0, 0])),  # 2
+                new Face(new Vector([0, 1,0]), new Vector([ 1, 0, 0]), new Vector([ 0, 0,-1])),  # 3
+                new Face(new Vector([0,-1,0]), new Vector([ 1, 0, 0]), new Vector([ 0, 0, 1])),  # 4
+                new Face(new Vector([0,-1,0]), new Vector([ 0, 0, 1]), new Vector([-1, 0, 0])),  # 5
+                new Face(new Vector([0,-1,0]), new Vector([-1, 0, 0]), new Vector([ 0, 0,-1])),  # 6
+                new Face(new Vector([0,-1,0]), new Vector([ 0, 0,-1]), new Vector([ 1, 0, 0])) ] # 7
+  octahedron.addFaces(octaFaces)
 
   octahedron.animate = (elapsed) ->
     model = Matrix.rotation(elapsed * 0.1 % 360, 0,1,0)
@@ -97,41 +92,3 @@ ubc = (a, b) -> if a is 0 and b is 0 then 1 else 0
 uniqueBary = (a, b) ->
   [ubc(a[3],b[3]), ubc(a[4],b[4]), ubc(a[5],b[5])]
 
-tessellate = (data,face) ->
-  indices = data.indices[face*3..face*3+2]
-  v0 = data.vertices[indices[0]*data.stride .. indices[0]*data.stride+data.stride - 1]
-  v1 = data.vertices[indices[1]*data.stride .. indices[1]*data.stride+data.stride - 1]
-  v2 = data.vertices[indices[2]*data.stride .. indices[2]*data.stride+data.stride - 1]
-
-  m0 = new Vector(midpoint(v0, v1)).normalize().elements().concat(uniqueBary(v0,v1))
-  m1 = new Vector(midpoint(v1, v2)).normalize().elements().concat(uniqueBary(v1,v2))
-  m2 = new Vector(midpoint(v2, v0)).normalize().elements().concat(uniqueBary(v2,v0))
-
-  newVertices = data.vertices.slice(0)
-  newIndices = data.indices.slice(0)
-  mi0 = newVertices.length / data.stride
-  mi1 = mi0 + 1
-  mi2 = mi1 + 1
-
-  newVertices = newVertices.concat(m0)
-  newVertices = newVertices.concat(m1)
-  newVertices = newVertices.concat(m2)
-
-  newIndices[face*3 + 1] = mi0
-  newIndices[face*3 + 2] = mi2
-
-  newIndices.push(mi0)
-  newIndices.push(indices[1])
-  newIndices.push(mi1)
-
-  newIndices.push(mi0)
-  newIndices.push(mi1)
-  newIndices.push(mi2)
-
-  newIndices.push(mi2)
-  newIndices.push(mi1)
-  newIndices.push(indices[2])
-
-  newPointers = []
-  for p in data.pointers
-    newPointers.push({name: p.name, dim: p.dim, offset: p.offset})
