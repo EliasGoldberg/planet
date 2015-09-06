@@ -26,13 +26,13 @@ class @Model
     for face in faces
       for i in [0..2]
         if (this.vertexExists(face.v[i]))
-          indexList = @indexMap["##{face.v[i]}"]
+          indexList = @indexMap["#{face.v[i]}"]
           index = @indices[indexList[0]]
           indexList.push(@indices.length)
           @indices.push(index)
         else                                   # new vertex
           index = @vertices.length / @stride
-          @indexMap["##{face.v[i]}"] = [@indices.length]
+          @indexMap["#{face.v[i]}"] = [@indices.length]
           bary = this.getBary(face,i)
           @vertices = @vertices.concat(face.v[i].elements()).concat(bary)
           @indices.push(index)
@@ -71,7 +71,7 @@ class @Model
     img.src = url
 
   vertexExists: (v) ->
-    indexList = @indexMap["##{v}"]
+    indexList = @indexMap["#{v}"]
     indexList? && indexList.length > 0
 
   getBary: (face,i) ->
@@ -83,7 +83,7 @@ class @Model
       when existingBarys.length < 2 and i is 2 then [0,0,1]
 
   getExistingBary: (v) ->
-    i = @indices[@indexMap["##{v}"][0]]*@stride+3
+    i = @indices[@indexMap["#{v}"][0]]*@stride+3
     b = @vertices[i..i+2]
     @vertices[i..i+2]
 
