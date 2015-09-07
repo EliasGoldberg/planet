@@ -42,11 +42,9 @@ $ ->
   program.activate()
 
   setSize = ->
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    view = Matrix.lookAt([0, 1, 7],[0,0,0],[0,1,0])
+    gl.viewport(0, 0, canvas.width, canvas.height)
     proj = Matrix.perspective(30, gl.canvas.clientWidth  / gl.canvas.clientHeight, 1, 100)
     program.setUniformMatrix('u_ProjMatrix', proj.array())
-    program.setUniformMatrix('u_ViewMatrix', view.array())
 
   setSize()
 
@@ -66,14 +64,55 @@ $ ->
                 new Face(new Vector([0,-1,0]), new Vector([ 0, 0,-1]), new Vector([ 1, 0, 0])) ] # 7
   octahedron.addFaces(octaFaces)
 
+  for face in octaFaces
+    octahedron.removeFaces([face])
+    smallerFaces = face.tessellate(3)
+    octahedron.addFaces(smallerFaces)
+
+  diffX = 0
+  diffY = 0
+  dragging = false
+  x = 0
+  y = 0
+  rX = 0
+  rY = 0
+  z = 7
   octahedron.animate = (elapsed) ->
-    model = Matrix.rotation(elapsed * 0.1 % 360, 0,1,0)
+    rX += if dragging? and dragging then diffX else 0
+    rY += if dragging? and dragging then diffY else 0
+    model = Matrix.rotation(-rX * 0.4 % 360, 0,1,0).multiply(
+      Matrix.rotation(-rY * 0.4 % 360, 1,0,0))
     program.setUniformMatrix('u_ModelMatrix', model.array())
+    view = Matrix.lookAt([0, 0, z],[0,0,0],[0,1,0])
+    program.setUniformMatrix('u_ViewMatrix', view.array())
+
   octahedron.draw = -> gl.drawElements(gl.TRIANGLES, octahedron.indices.length, gl.UNSIGNED_BYTE, 0)
 
   engine = new Engine(gl)
   engine.addModel(octahedron)
   engine.start()
+
+  $("#gl").mousedown((e) ->
+    x = e.pageX
+    y = e.pageY
+    dragging = true
+  )
+
+  $("#gl").mousemove((e) ->
+    diffX = if x? then x - e.pageX else 0
+    diffY = if y? then y - e.pageY else 0
+    x = e.pageX
+    y = e.pageY
+  )
+
+  $("#gl").mouseup((e)->
+    dragging = false
+  )
+
+  $('#gl').mousewheel((e) ->
+    console.log(e.deltaX, e.deltaY, e.deltaFactor)
+    z += e.deltaY * e.deltaFactor * .01
+  )
 
 setCanvasSize = ->
   canvas = document.getElementById('gl')
@@ -85,10 +124,4 @@ setCanvasSize = ->
   canvas.style.width  = window.innerWidth  + "px"
   canvas.style.height = window.innerHeight + "px"
   canvas
-
-midpoint = (a, b) -> [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2]
-
-ubc = (a, b) -> if a is 0 and b is 0 then 1 else 0
-uniqueBary = (a, b) ->
-  [ubc(a[3],b[3]), ubc(a[4],b[4]), ubc(a[5],b[5])]
 
