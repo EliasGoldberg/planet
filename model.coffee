@@ -92,7 +92,7 @@ class @Model
 
   makeIndexBuffer: (bufferData) ->
     if !@indexBuffer? then @indexBuffer = @gl.createBuffer()
-    uIntArray = new Uint8Array(bufferData)
+    uIntArray = new Uint16Array(bufferData)
     @gl.bindBuffer(@gl.ELEMENT_ARRAY_BUFFER, @indexBuffer)
     @gl.bufferData(@gl.ELEMENT_ARRAY_BUFFER, uIntArray, @gl.STATIC_DRAW)
     @bufferByteCounts[@indexBuffer] = uIntArray.BYTES_PER_ELEMENT

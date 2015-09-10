@@ -63,11 +63,9 @@ $ ->
                 new Face(new Vector([0,-1,0]), new Vector([-1, 0, 0]), new Vector([ 0, 0,-1])),  # 6
                 new Face(new Vector([0,-1,0]), new Vector([ 0, 0,-1]), new Vector([ 1, 0, 0])) ] # 7
   octahedron.addFaces(octaFaces)
+  octahedron.removeFaces(octaFaces)
+  octahedron.addFaces(face.tessellate(3)) for face in octaFaces
 
-  for face in octaFaces
-    octahedron.removeFaces([face])
-    smallerFaces = face.tessellate(3)
-    octahedron.addFaces(smallerFaces)
 
   diffX = 0
   diffY = 0
@@ -86,7 +84,7 @@ $ ->
     view = Matrix.lookAt([0, 0, z],[0,0,0],[0,1,0])
     program.setUniformMatrix('u_ViewMatrix', view.array())
 
-  octahedron.draw = -> gl.drawElements(gl.TRIANGLES, octahedron.indices.length, gl.UNSIGNED_BYTE, 0)
+  octahedron.draw = -> gl.drawElements(gl.TRIANGLES, octahedron.indices.length, gl.UNSIGNED_SHORT, 0)
 
   engine = new Engine(gl)
   engine.addModel(octahedron)
@@ -110,7 +108,6 @@ $ ->
   )
 
   $('#gl').mousewheel((e) ->
-    console.log(e.deltaX, e.deltaY, e.deltaFactor)
     z += e.deltaY * e.deltaFactor * .01
   )
 
