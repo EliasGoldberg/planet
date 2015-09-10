@@ -18,4 +18,6 @@ class @Vector
     b = n.elements()
     new Vector([@a[0] - b[0], @a[1] - b[1], @a[2] - b[2]])
 
+  @nor: (a,b) -> [ not (a[0] or b[0]), not (a[1] or b[1]), not (a[2] or b[2]) ]
+
   toString: -> "#{@a[0]}, #{@a[1]}, #{@a[2]}"

@@ -67,7 +67,7 @@ class @Model
     if face.b[i]? then return face.b[i]
     existingBarys = (this.getExistingBary(v) for v,j in face.v when j != i and this.vertexExists(v))
     switch
-      when existingBarys.length is 2 then Face.uniqueBary(existingBarys[0], existingBarys[1])
+      when existingBarys.length is 2 then Vector.nor existingBarys[0], existingBarys[1]
       when existingBarys.length < 2 and i is 0 then [1,0,0]
       when existingBarys.length < 2 and i is 1 then [0,1,0]
       when existingBarys.length < 2 and i is 2 then [0,0,1]
