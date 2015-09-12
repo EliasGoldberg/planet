@@ -5,7 +5,7 @@
   "main": "src/main.js",
   "devDependencies": {
     "karma": "~0.12"
-  }
+  },
   "scripts": {
     "test": "./node_modules/karma/bin/karma start --single-run --browsers PhantomJS"
   },
