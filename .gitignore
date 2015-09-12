@@ -2,5 +2,5 @@
 *.js
 *.map
 machines/boink.vars
-
+node_modules/
 *.pem
