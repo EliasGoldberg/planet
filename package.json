@@ -14,7 +14,7 @@
     "jasmine-core": "~2.3.4"
   },
   "scripts": {
-    "test": "node_modules/karma/bin/karma start --single-run --browsers Chrome"
+    "test": "node_modules/karma/bin/karma start --single-run --browsers Firefox"
   },
   "repository": {
     "type": "git",
