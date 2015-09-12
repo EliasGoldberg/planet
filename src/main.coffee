@@ -64,8 +64,9 @@ $ ->
                 new Face(new Vector([0,-1,0]), new Vector([ 0, 0,-1]), new Vector([ 1, 0, 0])) ] # 7
   octahedron.addFaces(octaFaces)
   octahedron.removeFaces(octaFaces)
-  octahedron.addFaces(face.tessellate(3)) for face in octaFaces
-
+  octahedron.addFaces(face.tessellate(4)) for face in octaFaces
+  octahedron.addModifier 'normalize', (v) -> v.normalize()
+  octahedron.applyModifiers()
 
   diffX = 0
   diffY = 0

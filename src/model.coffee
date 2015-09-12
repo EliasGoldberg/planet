@@ -14,6 +14,7 @@ class @Model
                 {name: 'a_Bary', dim: 3, offset: 3}]
     @uniforms = []
     @textures = []
+    @modifiers = []
 
     @program.setUniform(u.name, u.value) for u in @uniforms
     this.setupTexture(t.url, t.sampler, i) for t,i in @textures
@@ -109,3 +110,13 @@ class @Model
       @gl.texImage2D(@gl.TEXTURE_2D, 0, @gl.RGB, @gl.RGB, @gl.UNSIGNED_BYTE, img)
       @program.setUniform(sampler,i)
     img.src = url
+
+  addModifier: (label,f) -> @modifiers[label] = f
+  removeModifier: (label) -> delete @modifiers[label]
+  applyModifiers: () ->
+    for label,f of @modifiers
+      for i in [0..@vertices.length-1] by @stride
+        v = new Vector(@vertices[i..i+2])
+        mod = f(v).elements()
+        @vertices.splice(i,3,mod[0],mod[1],mod[2])
+    @buildModel()
