@@ -2,7 +2,6 @@
   "name": "webgl",
   "version": "0.0.0",
   "description": "webgl using coffeescript",
-  "main": "src/main.js",
   "devDependencies": {
     "karma": "~0.13.9",
     "karma-jasmine": "~0.3.6",
