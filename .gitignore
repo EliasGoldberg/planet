@@ -1,5 +1,6 @@
 .idea/
-*.js
+src/*.js
+spec/*.js
 *.map
 machines/boink.vars
 node_modules/
