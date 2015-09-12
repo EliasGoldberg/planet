@@ -4,7 +4,9 @@
   "description": "webgl using coffeescript",
   "main": "src/main.js",
   "devDependencies": {
-    "karma": "~0.12"
+    "karma": "~0.12",
+    "karma-jasmine": "~0.2.0",
+    "karma-phantomjs-launcher": "~0.1"
   },
   "scripts": {
     "test": "./node_modules/karma/bin/karma start --single-run --browsers PhantomJS"
