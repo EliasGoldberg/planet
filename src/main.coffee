@@ -104,13 +104,9 @@ $ ->
     y = e.pageY
   )
 
-  $("#gl").mouseup((e)->
-    dragging = false
-  )
+  $("#gl").mouseup (e)-> dragging = false
 
-  $('#gl').mousewheel((e) ->
-    z += e.deltaY * e.deltaFactor * .01
-  )
+  $('#gl').mousewheel (e) -> z += e.deltaY * e.deltaFactor * .01
 
 setCanvasSize = ->
   canvas = document.getElementById('gl')
