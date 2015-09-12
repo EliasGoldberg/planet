@@ -96,16 +96,13 @@ $ ->
     y = e.pageY
     dragging = true
   )
-
   $("#gl").mousemove((e) ->
     diffX = if x? then x - e.pageX else 0
     diffY = if y? then y - e.pageY else 0
     x = e.pageX
     y = e.pageY
   )
-
   $("#gl").mouseup (e)-> dragging = false
-
   $('#gl').mousewheel (e) -> z += e.deltaY * e.deltaFactor * .01
 
 setCanvasSize = ->
