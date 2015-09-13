@@ -63,13 +63,9 @@ class @Matrix
                            0, ct,                    0,  0,
                            0,  0,   -(far + near) * rd, -1,
                            0,  0, -2 * near * far * rd,  0])
-  
-  multiply: (b) ->
-    mn = []
-    for i in [0..3]
-      for j in [0..3]
-        sum = 0
-        for k in [0..3]
-          sum += @m[4*i+k] * b.m[4*k+j]
-        mn[i*4+j] = sum
-    new Matrix(mn)
+
+  @flatten: (arrays) -> new Matrix [].concat.apply([], arrays)
+
+  rows: -> @m[i..i+3] for i in [0..@m.length-1] by 4
+  cols: -> [@m[i], @m[i+4], @m[i+8], @m[i+12]] for i in [0..3]
+  multiply: (b) -> Matrix.flatten(r[0]*c[0] + r[1]*c[1] + r[2]*c[2] + r[3]*c[3] for c in b.cols() for r in this.rows())
