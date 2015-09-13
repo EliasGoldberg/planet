@@ -64,8 +64,16 @@ $ ->
                 new Face(new Vector([0,-1,0]), new Vector([ 0, 0,-1]), new Vector([ 1, 0, 0])) ] # 7
   octahedron.addFaces(octaFaces)
   octahedron.removeFaces(octaFaces)
-  octahedron.addFaces(face.tessellate(4)) for face in octaFaces
+  octahedron.addFaces(face.tessellate(5)) for face in octaFaces
   octahedron.addModifier 'normalize', (v) -> v.normalize()
+  octahedron.addModifier('randomize', (v) ->
+    x = Math.random() * .05
+    y = Math.random() * .05
+    z = Math.random() * .05
+    v2 = new Vector([v.a[0] + x, v.a[1] + y, v.a[2] + z])
+    v2
+  )
+
   octahedron.applyModifiers()
 
   diffX = 0
