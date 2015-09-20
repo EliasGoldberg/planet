@@ -27,4 +27,7 @@ class @Vector
   @gauss: ->
     new Vector([@g(), @g(), @g()]).normalize()
 
+  @random: ->
+    new Vector([Math.random()*2-1,Math.random()*2-1,Math.random()*2-1]).normalize()
+
   toString: -> "#{@a[0]}, #{@a[1]}, #{@a[2]}"

@@ -1,5 +1,5 @@
 $ ->
-  Math.seedrandom('1')
+  Math.seedrandom('goldberg')
   canvas = setCanvasSize()
   gl = canvas.getContext('webgl')
   gl.enable(gl.DEPTH_TEST)
@@ -20,7 +20,7 @@ $ ->
     void main() {
       gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
       v_Bary = a_Bary;
-      v_Pos = gl_Position;
+      v_Pos = a_Position;
     }
   ''')
 
@@ -31,9 +31,6 @@ $ ->
     varying vec3 v_Bary;
     varying highp vec4 v_Pos;
     uniform vec3 featurePoints[20];
-    uniform mediump mat4 u_ModelMatrix;
-    uniform mediump mat4 u_ViewMatrix;
-    uniform mediump mat4 u_ProjMatrix;
     float edgeFactor(){
       vec3 d = fwidth(v_Bary);
       vec3 a3 = smoothstep(vec3(0.0), 1.5*d, v_Bary);
@@ -42,27 +39,45 @@ $ ->
 
     void main() {
       //vec3 faceColor = vec3(37.0/255.0, 45.0/255.0, 118.0/255.0);
-      float d = distance(vec3(v_Pos.xyz),(u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * vec4(featurePoints[0],1)).xyz);
-      float d2 = 0.0;
-      float d3 = 0.0;
-      float d4 = 0.0;
+      float d = acos(dot(vec3(v_Pos.xyz),featurePoints[0])) / M_PI * 3.0;
+      float d2 = 1000.0;
+      float d3 = 1000.0;
+      float d4 = 1000.0;
       for (int i = 1; i < 20; i++) {
-        float current = distance(vec3(v_Pos.xyz),(u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * vec4(featurePoints[i],1)).xyz);
+        float current = acos(dot(vec3(v_Pos.xyz),featurePoints[i])) / M_PI * 3.0;
         if (current < d) {
             d4 = d3;
             d3 = d2;
             d2 = d;
             d = current;
+        } else if (current < d2) {
+            d4 = d3;
+            d3 = d2;
+            d2 = current;
+        } else if (current < d3) {
+            d4 = d3;
+            d3 = current;
+        } else if (current < d4) {
+            d4 = current;
         }
       }
-      vec4 faceColor = vec4(min(1.0,d2-d),min(1.0,d2-d),min(1.0,d2-d),1.0);
-      //vec3 wireColor = vec3(147.0/255.0, 149.0/255.0, 189.0/255.0);
-      //gl_FragColor = vec4(mix(wireColor, faceColor, edgeFactor()),1.0);
-      gl_FragColor = faceColor;
+      float red = min(1.0,d2-d);
+      float green = red;
+      float blue = red;
+      if (d < 0.05) {
+        red = 1.0;
+        green = 0.0;
+        blue = 0.0;
+      }
+      vec3 faceColor = vec3(red,green,blue);
+      vec3 wireColor = vec3(0, 0, 0);
+      gl_FragColor = vec4(mix(wireColor, faceColor, edgeFactor()),1.0);
+      //gl_FragColor = faceColor;
     }
   ''')
 
-  featurePoints = (Vector.gauss().elements() for i in [0..19])
+  featurePoints = (Vector.random().elements() for i in [0..19])
+  console.log(featurePoints[i].toString()) for i in [0..19]
   featurePoints = [].concat.apply([], featurePoints)
 
 
