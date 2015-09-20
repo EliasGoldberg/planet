@@ -20,4 +20,11 @@ class @Vector
 
   @nor: (a,b) -> [ +not (a[0] or b[0]), +not (a[1] or b[1]), +not (a[2] or b[2]) ]
 
+  @g: ->
+   ((Math.random() + Math.random() + Math.random() + Math.random() +
+     Math.random() + Math.random()) - 3) / 3;
+
+  @gauss: ->
+    new Vector([@g(), @g(), @g()]).normalize()
+
   toString: -> "#{@a[0]}, #{@a[1]}, #{@a[2]}"

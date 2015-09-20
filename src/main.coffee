@@ -1,9 +1,10 @@
 $ ->
+  Math.seedrandom('1')
   canvas = setCanvasSize()
   gl = canvas.getContext('webgl')
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.CULL_FACE);
-  gl.clearColor(0.0,0.0,0.0,1.0)
+  gl.clearColor(0.0,0.0,0.1,1.0)
   gl.getExtension('OES_standard_derivatives')
 
   program = new ShaderProgram(gl)
@@ -12,20 +13,27 @@ $ ->
     attribute vec4 a_Position;
     attribute vec3 a_Bary;
     varying vec3 v_Bary;
-    uniform mat4 u_ModelMatrix;
-    uniform mat4 u_ViewMatrix;
-    uniform mat4 u_ProjMatrix;
+    varying highp vec4 v_Pos;
+    uniform mediump mat4 u_ModelMatrix;
+    uniform mediump mat4 u_ViewMatrix;
+    uniform mediump mat4 u_ProjMatrix;
     void main() {
       gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
       v_Bary = a_Bary;
+      v_Pos = gl_Position;
     }
   ''')
 
   program.addShader(gl.FRAGMENT_SHADER,'''
     #extension GL_OES_standard_derivatives : enable
+    #define M_PI 3.1415926535897932384626433832795
     precision mediump float;
     varying vec3 v_Bary;
-
+    varying highp vec4 v_Pos;
+    uniform vec3 featurePoints[20];
+    uniform mediump mat4 u_ModelMatrix;
+    uniform mediump mat4 u_ViewMatrix;
+    uniform mediump mat4 u_ProjMatrix;
     float edgeFactor(){
       vec3 d = fwidth(v_Bary);
       vec3 a3 = smoothstep(vec3(0.0), 1.5*d, v_Bary);
@@ -33,13 +41,34 @@ $ ->
     }
 
     void main() {
-      vec3 faceColor = vec3(37.0/255.0, 45.0/255.0, 118.0/255.0);
-      vec3 wireColor = vec3(147.0/255.0, 149.0/255.0, 189.0/255.0);
-      gl_FragColor = vec4(mix(wireColor, faceColor, edgeFactor()),1.0);
+      //vec3 faceColor = vec3(37.0/255.0, 45.0/255.0, 118.0/255.0);
+      float d = distance(vec3(v_Pos.xyz),(u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * vec4(featurePoints[0],1)).xyz);
+      float d2 = 0.0;
+      float d3 = 0.0;
+      float d4 = 0.0;
+      for (int i = 1; i < 20; i++) {
+        float current = distance(vec3(v_Pos.xyz),(u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * vec4(featurePoints[i],1)).xyz);
+        if (current < d) {
+            d4 = d3;
+            d3 = d2;
+            d2 = d;
+            d = current;
+        }
+      }
+      vec4 faceColor = vec4(min(1.0,d2-d),min(1.0,d2-d),min(1.0,d2-d),1.0);
+      //vec3 wireColor = vec3(147.0/255.0, 149.0/255.0, 189.0/255.0);
+      //gl_FragColor = vec4(mix(wireColor, faceColor, edgeFactor()),1.0);
+      gl_FragColor = faceColor;
     }
   ''')
 
+  featurePoints = (Vector.gauss().elements() for i in [0..19])
+  featurePoints = [].concat.apply([], featurePoints)
+
+
   program.activate()
+
+  program.setUniformArray('featurePoints',featurePoints)
 
   setSize = ->
     gl.viewport(0, 0, canvas.width, canvas.height)
@@ -67,6 +96,7 @@ $ ->
   d = 5
   octahedron.addFaces(face.tessellate(d)) for face in octaFaces
   octahedron.addModifier 'normalize', (v) -> v.normalize()
+  ###
   octahedron.addModifier 'noise', (v) ->
     z = 1 - 2 * Math.random()
     r = Math.sqrt(1 - z*z)
@@ -74,7 +104,7 @@ $ ->
     x = r * Math.cos theta
     y = r * Math.sin theta
     new Vector([v.a[0] + x/(d*10), v.a[1] + y/(d*10), v.a[2] + z/(d*10)])
-
+  ###
   octahedron.applyModifiers()
 
   diffX = 0

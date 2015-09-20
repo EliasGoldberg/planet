@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <script src="lib/seedrandom.min.js"></script>
+  <script src="lib/jquery-2.1.4.min.js"></script>
+  <style>
+    #container {
+      position: relative;
+      width: 400px;
+      height: 500px;
+      border: 1px solid #000;
+    }
+    #container div {
+      position: absolute;
+      bottom: 0;
+      width: 2px;
+    }
+  </style>
+</head>
+<body>
+<div id="container"></div>
+  <script>
+
+    function gauss() {
+      return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3;
+    }
+
+    function draw(f, cnt, color, seed) {
+      Math.seedrandom(seed);
+      var numbers = [];
+      for (var i = 0; i < 200; i++) numbers[i] = 0;
+      for (var i = 0; i < cnt; i++) {
+        numbers[100 + Math.round(100 * f())]++;
+      }
+      for (var i = 0; i < 200; i++) {
+        $('#container').append($('<div>').css({
+          left: i * 2 + 'px',
+          height: numbers[i] / 25 + 'px',
+          background: color
+        }));
+      }
+    }
+
+    draw(gauss, 600000, 'rgba(0,0,0,.1)', 'a');
+    draw(gauss, 600000, 'rgba(0,0,0,.1)', 'b');
+    draw(gauss, 600000, 'rgba(0,0,0,.1)', 'c');
+    draw(gauss, 600000, 'rgba(0,0,0,.1)', 'd');
+  </script>
+</body>
+</html>

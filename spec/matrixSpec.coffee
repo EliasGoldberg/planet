@@ -91,7 +91,7 @@ describe "Matrix", ->
 
   it "should create a perspective projection matrix", ->
     fov = 30; width = 300; height = 200; near = 1; far = 100
-    projection = Matrix.perspective(fov, width  / height, near, far)
+    projection = Matrix.perspective(fov, width / height, near, far)
     actual = [2.48803387, 0, 0, 0,
               0, 3.7320508, 0, 0,
               0, 0, -1.0202020, -1,

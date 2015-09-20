@@ -12,7 +12,8 @@
     "instance_type": "t2.micro",
     "ssh_username": "centos",
     "ami_name": "boink {{timestamp}}",
-    "ssh_pty": true
+    "ssh_pty": true,
+    "region": "us-east-1"
   }],
   "provisioners": [{
     "type": "shell",
@@ -32,7 +33,16 @@
       "sudo firewall-cmd --permanent --zone=public --add-service=https",
       "sudo firewall-cmd --reload",
       "sudo rm -rf /usr/share/nginx/html/*",
-      "mkdir /home/centos/html"
+      "sudo yum -y install ruby",
+      "curl -O https://bootstrap.pypa.io/get-pip.py",
+      "sudo python get-pip.py",
+      "sudo pip install awscli",
+      "rm get-pip.py",
+      "cd /home/centos",
+      "aws s3 cp s3://aws-codedeploy-us-east-1/latest/install . --region us-east-1",
+      "sudo chmod +x ./install",
+      "sudo ./install auto",
+      "rm install"
     ]
   }]
 }
