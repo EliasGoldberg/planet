@@ -10,6 +10,7 @@ $ ->
   program = new ShaderProgram(gl)
 
   program.addShader(gl.VERTEX_SHADER,'''
+    #define M_PI 3.1415926535897932384626433832795
     attribute vec4 a_Position;
     attribute vec3 a_Bary;
     varying vec3 v_Bary;
@@ -17,7 +18,25 @@ $ ->
     uniform mediump mat4 u_ModelMatrix;
     uniform mediump mat4 u_ViewMatrix;
     uniform mediump mat4 u_ProjMatrix;
+    uniform mediump vec3 featurePoints[20];
+    uniform float plateElevations[20];
+
+    int nearest(vec4 pos) {
+      int near_idx = 0;
+      float d = 1000.0;
+      for (int i = 0; i < 20; i++) {
+        float current = acos(dot(vec3(pos.xyz),featurePoints[i])) / M_PI * 3.0;
+        if (current < d) {
+            d = current;
+            near_idx = i;
+        }
+      }
+      return near_idx;
+    }
+
     void main() {
+      //int i = nearest(a_Position);
+      //vec4 pos = vec4(a_Position.xyz * plateElevations[i], 1.0);
       gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
       v_Bary = a_Bary;
       v_Pos = a_Position;
@@ -30,60 +49,47 @@ $ ->
     precision mediump float;
     varying vec3 v_Bary;
     varying highp vec4 v_Pos;
-    uniform vec3 featurePoints[20];
+    uniform mediump vec3 featurePoints[20];
+
     float edgeFactor(){
       vec3 d = fwidth(v_Bary);
-      vec3 a3 = smoothstep(vec3(0.0), 1.5*d, v_Bary);
+      vec3 a3 = smoothstep(vec3(0.0), 1.25*d, v_Bary);
       return min(min(a3.x, a3.y), a3.z);
     }
 
-    void main() {
-      //vec3 faceColor = vec3(37.0/255.0, 45.0/255.0, 118.0/255.0);
-      float d = acos(dot(vec3(v_Pos.xyz),featurePoints[0])) / M_PI * 3.0;
+    vec2 nearest(vec4 pos) {
+      float d = 1000.0;
       float d2 = 1000.0;
-      float d3 = 1000.0;
-      float d4 = 1000.0;
-      for (int i = 1; i < 20; i++) {
-        float current = acos(dot(vec3(v_Pos.xyz),featurePoints[i])) / M_PI * 3.0;
+      for (int i = 0; i < 20; i++) {
+        float current = acos(dot(vec3(pos.xyz),featurePoints[i])) / M_PI * 3.0;
         if (current < d) {
-            d4 = d3;
-            d3 = d2;
             d2 = d;
             d = current;
         } else if (current < d2) {
-            d4 = d3;
-            d3 = d2;
             d2 = current;
-        } else if (current < d3) {
-            d4 = d3;
-            d3 = current;
-        } else if (current < d4) {
-            d4 = current;
         }
       }
-      float red = min(1.0,d2-d);
-      float green = red;
-      float blue = red;
-      if (d < 0.05) {
-        red = 1.0;
-        green = 0.0;
-        blue = 0.0;
-      }
-      vec3 faceColor = vec3(red,green,blue);
+      return vec2(d,d2);
+    }
+
+    void main() {
+      vec2 near = nearest(v_Pos);
+      float c = min(1.0,near[1] - near[0]);
+      vec3 faceColor = vec3(c,c,c);
       vec3 wireColor = vec3(0, 0, 0);
-      gl_FragColor = vec4(mix(wireColor, faceColor, edgeFactor()),1.0);
-      //gl_FragColor = faceColor;
+      gl_FragColor = vec4(mix(wireColor, faceColor, edgeFactor()),1);
+      //gl_FragColor = vec4(faceColor,1.0);
     }
   ''')
 
   featurePoints = (Vector.random().elements() for i in [0..19])
-  console.log(featurePoints[i].toString()) for i in [0..19]
   featurePoints = [].concat.apply([], featurePoints)
-
+  plateElevations = (1 + Math.random() * 0.025 for i in [0..19])
 
   program.activate()
 
-  program.setUniformArray('featurePoints',featurePoints)
+  program.setUniformVectorArray('featurePoints',featurePoints)
+  program.setUniformArray('plateElevations',plateElevations)
 
   setSize = ->
     gl.viewport(0, 0, canvas.width, canvas.height)
@@ -109,17 +115,7 @@ $ ->
   octahedron.addFaces(octaFaces)
   octahedron.removeFaces(octaFaces)
   d = 5
-  octahedron.addFaces(face.tessellate(d)) for face in octaFaces
-  octahedron.addModifier 'normalize', (v) -> v.normalize()
-  ###
-  octahedron.addModifier 'noise', (v) ->
-    z = 1 - 2 * Math.random()
-    r = Math.sqrt(1 - z*z)
-    theta = 2 * Math.PI * Math.random()
-    x = r * Math.cos theta
-    y = r * Math.sin theta
-    new Vector([v.a[0] + x/(d*10), v.a[1] + y/(d*10), v.a[2] + z/(d*10)])
-  ###
+  octahedron.addFaces(face.tessellate(d,Vector.slerp)) for face in octaFaces
   octahedron.applyModifiers()
 
   diffX = 0

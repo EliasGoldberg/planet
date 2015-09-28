@@ -30,9 +30,13 @@ class @ShaderProgram
     uniform = @gl.getUniformLocation(@id, name)
     @gl["uniform#{this.getMethodSuffix(value)}"](uniform,value)
 
-  setUniformArray: (name,value) ->
+  setUniformVectorArray: (name,value) ->
     uniform = @gl.getUniformLocation(@id, name)
     @gl["uniform3fv"](uniform,value)
+
+  setUniformArray: (name,value) ->
+    uniform = @gl.getUniformLocation(@id, name)
+    @gl["uniform1fv"](uniform,value)
 
   setUniformMatrix: (name, value) ->
     uniform = @gl.getUniformLocation(@id, name)
