@@ -39,7 +39,4 @@ class @Face
 
   midpoint: (a, b) -> [(a.a[0] + b.a[0]) / 2, (a.a[1] + b.a[1]) / 2, (a.a[2] + b.a[2]) / 2]
 
-
-
-
   toString: () -> "#{@v[0]}\n#{@v[1]}\n#{@v[2]}"

@@ -73,9 +73,9 @@ $ ->
     }
 
     void main() {
-      vec2 near = nearest(v_Pos);
-      float c = min(1.0,near[1] - near[0]);
-      vec3 faceColor = vec3(c,c,c);
+      //vec2 near = nearest(v_Pos);
+      //float c = min(1.0,near[1] - near[0]);
+      vec3 faceColor = vec3(0.8,0.8,0.8);
       vec3 wireColor = vec3(0, 0, 0);
       gl_FragColor = vec4(mix(wireColor, faceColor, edgeFactor()),1);
       //gl_FragColor = vec4(faceColor,1.0);
@@ -114,7 +114,7 @@ $ ->
                 new Face(new Vector([0,-1,0]), new Vector([ 0, 0,-1]), new Vector([ 1, 0, 0])) ] # 7
   octahedron.addFaces(octaFaces)
   octahedron.removeFaces(octaFaces)
-  d = 5
+  d = 0
   octahedron.addFaces(face.tessellate(d,Vector.slerp)) for face in octaFaces
   octahedron.applyModifiers()
 
@@ -126,6 +126,7 @@ $ ->
   rX = 0
   rY = 0
   z = 7
+  tDist = 5
   octahedron.animate = (elapsed) ->
     rX += if dragging? and dragging then diffX else 0
     rY += if dragging? and dragging then diffY else 0
@@ -134,6 +135,27 @@ $ ->
     program.setUniformMatrix('u_ModelMatrix', model.array())
     view = Matrix.lookAt([0, 0, z],[0,0,0],[0,1,0])
     program.setUniformMatrix('u_ViewMatrix', view.array())
+    proj = Matrix.perspective(30, gl.canvas.clientWidth  / gl.canvas.clientHeight, 1, 100)
+    pvm = proj.multiply(view).multiply(model)
+    closeFaces = []
+    for face in octaFaces
+      f = pvm.multiply(face.centroid)
+      c = pvm.multiply(new Vector([0,0,z]))
+      d = c.distance(f)
+      if (d < tDist) then closeFaces.push(face)
+
+
+    if (closeFaces.length > 0)
+      console.log(d)
+      tessFaces = []
+      tDist = tDist / 2
+      for closeFace in closeFaces
+        octaFaces.splice(octaFaces.indexOf(closeFace),1)
+        newFaces = closeFace.tessellate(1,Vector.slerp)
+        tessFaces = tessFaces.concat(newFaces)
+      octaFaces = octaFaces.concat(tessFaces)
+      octahedron.removeFaces(closeFaces)
+      octahedron.addFaces(tessFaces)
 
   octahedron.draw = -> gl.drawElements(gl.TRIANGLES, octahedron.indices.length, gl.UNSIGNED_SHORT, 0)
 

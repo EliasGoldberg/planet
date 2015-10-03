@@ -64,8 +64,13 @@ class @Matrix
                            0,  0,   -(far + near) * rd, -1,
                            0,  0, -2 * near * far * rd,  0])
 
-  @flatten: (arrays) -> new Matrix [].concat.apply([], arrays)
+  @flatten: (arrays) ->
+    if arrays[0].length > 1
+      new Matrix [].concat.apply([], arrays)
+    else
+      new Vector [].concat.apply([], arrays)
 
   rows: -> @m[i..i+3] for i in [0..@m.length-1] by 4
   cols: -> [@m[i], @m[i+4], @m[i+8], @m[i+12]] for i in [0..3]
+
   multiply: (b) -> Matrix.flatten(r[0]*c[0] + r[1]*c[1] + r[2]*c[2] + r[3]*c[3] for c in b.cols() for r in this.rows())

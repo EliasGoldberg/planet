@@ -53,4 +53,6 @@ class @Vector
 
   scale: (n) -> new Vector([@a[0]*n,@a[1]*n,@a[2]*n])
 
+  cols: () -> [[@a[0],@a[1],@a[2],1]]
+
   toString: -> "#{@a[0]}, #{@a[1]}, #{@a[2]}"
