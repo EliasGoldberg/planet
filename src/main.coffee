@@ -4,7 +4,7 @@ $ ->
   gl = canvas.getContext('webgl')
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.CULL_FACE);
-  gl.clearColor(0.0,0.0,0.1,1.0)
+  gl.clearColor(0.0,0.0,0.5,1.0)
   gl.getExtension('OES_standard_derivatives')
 
   program = new ShaderProgram(gl)
@@ -93,7 +93,7 @@ $ ->
 
   setSize = ->
     gl.viewport(0, 0, canvas.width, canvas.height)
-    proj = Matrix.perspective(30, gl.canvas.clientWidth  / gl.canvas.clientHeight, 1, 100)
+    proj = Matrix.perspective(90, gl.canvas.clientWidth  / gl.canvas.clientHeight, 0.00001, 100)
     program.setUniformMatrix('u_ProjMatrix', proj.array())
 
   setSize()
@@ -103,7 +103,6 @@ $ ->
     setSize()
   )
 
-  octahedron = new Model(gl,program)
   octaFaces = [ new Face(new Vector([0, 1,0]), new Vector([ 0, 0, 1]), new Vector([ 1, 0, 0])),  # 0
                 new Face(new Vector([0, 1,0]), new Vector([-1, 0, 0]), new Vector([ 0, 0, 1])),  # 1
                 new Face(new Vector([0, 1,0]), new Vector([ 0, 0,-1]), new Vector([-1, 0, 0])),  # 2
@@ -112,11 +111,8 @@ $ ->
                 new Face(new Vector([0,-1,0]), new Vector([ 0, 0, 1]), new Vector([-1, 0, 0])),  # 5
                 new Face(new Vector([0,-1,0]), new Vector([-1, 0, 0]), new Vector([ 0, 0,-1])),  # 6
                 new Face(new Vector([0,-1,0]), new Vector([ 0, 0,-1]), new Vector([ 1, 0, 0])) ] # 7
-  octahedron.addFaces(octaFaces)
-  octahedron.removeFaces(octaFaces)
-  d = 0
-  octahedron.addFaces(face.tessellate(d,Vector.slerp)) for face in octaFaces
-  octahedron.applyModifiers()
+
+  octahedron = new Model(gl,program,octaFaces)
 
   diffX = 0
   diffY = 0
@@ -126,7 +122,9 @@ $ ->
   rX = 0
   rY = 0
   z = 7
-  tDist = 5
+  $(document.body).append('<div id="overlay"></div>')
+
+
   octahedron.animate = (elapsed) ->
     rX += if dragging? and dragging then diffX else 0
     rY += if dragging? and dragging then diffY else 0
@@ -135,28 +133,23 @@ $ ->
     program.setUniformMatrix('u_ModelMatrix', model.array())
     view = Matrix.lookAt([0, 0, z],[0,0,0],[0,1,0])
     program.setUniformMatrix('u_ViewMatrix', view.array())
-    proj = Matrix.perspective(30, gl.canvas.clientWidth  / gl.canvas.clientHeight, 1, 100)
+    proj = Matrix.perspective(45, gl.canvas.clientWidth  / gl.canvas.clientHeight, 0.01, 100)
     pvm = proj.multiply(view).multiply(model)
-    closeFaces = []
-    for face in octaFaces
-      f = pvm.multiply(face.centroid)
-      c = pvm.multiply(new Vector([0,0,z]))
-      d = c.distance(f)
-      if (d < tDist) then closeFaces.push(face)
+    #c = pvm.multiply(new Vector([0,0,z]))
+    #octahedron.detail(pvm,c)
 
-
-    if (closeFaces.length > 0)
-      console.log(d)
-      tessFaces = []
-      tDist = tDist / 2
-      for closeFace in closeFaces
-        octaFaces.splice(octaFaces.indexOf(closeFace),1)
-        newFaces = closeFace.tessellate(1,Vector.slerp)
-        tessFaces = tessFaces.concat(newFaces)
-      octaFaces = octaFaces.concat(tessFaces)
-      octahedron.removeFaces(closeFaces)
-      octahedron.addFaces(tessFaces)
-
+    #centroid = pvm.multiply(octahedron.faces[0].centroid)
+    centroid = model.multiply(octahedron.faces[0].centroid)
+    cx = Math.round((( centroid.a[0]) / 2.0) * gl.canvas.clientWidth )
+    cy = Math.round((( centroid.a[1]) / 2.0) * gl.canvas.clientHeight)
+    $('#overlay').css({
+      position:'fixed',
+      color:'red',
+      left:cx + 'px',
+      top:cy + 'px'
+    })
+    $('#overlay').text(centroid.toString() + " " + cx + " " + cy)
+    console.log(octahedron.faces[0].centroid.toString() + "  " + centroid.toString() + "   " + cx + ", " + cy)
   octahedron.draw = -> gl.drawElements(gl.TRIANGLES, octahedron.indices.length, gl.UNSIGNED_SHORT, 0)
 
   engine = new Engine(gl)
@@ -175,7 +168,10 @@ $ ->
     y = e.pageY
   )
   $("#gl").mouseup (e)-> dragging = false
-  $('#gl').mousewheel (e) -> z += e.deltaY * e.deltaFactor * .01
+  $('#gl').mousewheel (e) ->
+    delta = Math.min(0.04, (z-1) * 0.1)
+    z += e.deltaY * delta
+    console.log("deltaY: #{e.deltaY}, deltaFactor: #{e.deltaFactor}, delta: #{delta}, z: #{z}")
 
 setCanvasSize = ->
   canvas = document.getElementById('gl')

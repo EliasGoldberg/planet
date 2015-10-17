@@ -68,9 +68,14 @@ class @Matrix
     if arrays[0].length > 1
       new Matrix [].concat.apply([], arrays)
     else
-      new Vector [].concat.apply([], arrays)
+      new Vector([arrays[0][0] / arrays[3][0],
+                  arrays[1][0] / arrays[3][0],
+                  arrays[2][0] / arrays[3][0]])
 
   rows: -> @m[i..i+3] for i in [0..@m.length-1] by 4
   cols: -> [@m[i], @m[i+4], @m[i+8], @m[i+12]] for i in [0..3]
 
   multiply: (b) -> Matrix.flatten(r[0]*c[0] + r[1]*c[1] + r[2]*c[2] + r[3]*c[3] for c in b.cols() for r in this.rows())
+
+  toString: ->
+    "#{@m[0]}, #{@m[1]}, #{@m[2]}, #{@m[3]}\n#{@m[4]}, #{@m[5]}, #{@m[6]}, #{@m[7]}\n#{@m[8]}, #{@m[9]}, #{@m[10]}, #{@m[11]}\n#{@m[12]}, #{@m[13]}, #{@m[14]}, #{@m[15]}"

@@ -1,6 +1,6 @@
 class @Model
 
-  constructor: (@gl,@program) ->
+  constructor: (@gl,@program,@faces) ->
     @vertexToIndexMap = {}
     @faceToIndexLocationMap = {}
     @vertexReferenceCounts = {}
@@ -18,6 +18,18 @@ class @Model
 
     @program.setUniform(u.name, u.value) for u in @uniforms
     this.setupTexture(t.url, t.sampler, i) for t,i in @textures
+    this.addFaces(@faces)
+    this.buildModel()
+
+  detail: (pvm,camera) ->
+    results = {add: [], remove: []}
+    for face in @faces
+      face.detail(pvm,camera,results)
+    if results.remove.length > 0 or results.add.length > 0
+      this.removeFaces(results.remove)
+      this.addFaces(results.add)
+      this.buildModel()
+
 
   addFaces: (faces) ->
     for face in faces
@@ -34,7 +46,6 @@ class @Model
           bary = this.getBary(face,i)
           face.setBary(bary,i)
         this.addIndex(vertex)
-    this.buildModel()
 
   addIndex: (v) ->
     isNew = not this.vertexExists(v)
@@ -59,8 +70,6 @@ class @Model
       delete @faceToIndexLocationMap[face.toString()]
       for otherFace,otherLocation of @faceToIndexLocationMap when otherLocation > location
         @faceToIndexLocationMap[otherFace] = otherLocation - 3
-
-    this.buildModel()
 
   vertexExists: (v) -> @vertexToIndexMap[v.toString()]?
 

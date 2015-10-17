@@ -1,4 +1,3 @@
-.idea/
 src/*.js
 spec/*.js
 *.map
