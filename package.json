@@ -11,7 +11,10 @@
     "karma-chrome-launcher": "~0.2.0",
     "jasmine": "~2.3.2",
     "jasmine-core": "~2.3.4",
-    "coffee-script": "~1.10.0"
+    "coffee-script": "~1.10.0",
+    "connect": "~3.0.0",
+    "serve-static": "~1.10.0",
+    "reload": "~0.5.0"
   },
   "scripts": {
     "pretest": "coffee -c spec src",

@@ -20,9 +20,14 @@ To run unit tests:
 - `karma run`
 
 To run unit tests whenever you save a file:
-- Install a bunch of dependencies globally :(
-  - `npm install -g jasmine`
-  - `npm install -g karma`
-  - `npm install -g karma-jasmine`
-  - `npm install -g karma-firefox-launcher`
+- Install a bunch of dependencies globally: `npm install -g jasmine karma karma-jasmine karma-firefox-launcher`
 - In a new terminal window: `karma start`
+
+To serve the project locally:
+- Install the global dependencies: `npm install -g connect serve-static`
+- In a new terminal window: `node server.js`
+- In your favorite browser, navigate to `localhost:8080`
+
+To reload the project in the browser whenever a file is saved:
+- Install yet more global dependencies: `npm install -g supervisor reload`
+- Start the file watcher: `reload -b -d src` (you cannot have the `node server.js` command running while doing this)
