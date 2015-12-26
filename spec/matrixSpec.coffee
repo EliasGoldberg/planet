@@ -53,7 +53,7 @@ describe "Matrix", ->
     actual = [1, 0, 0, 0,
               0, 0.70710678, 0.70710678, 0,
               0, -0.70710678, 0.70710678, 0,
-              1, 2, 3, 1]
+              1, -0.70710678, 3.53553390, 1]
     expect(e).toBeCloseTo(actual[i], sigDigits) for e,i in m.elements()
 
   it "should translate an existing matrix", ->
@@ -67,18 +67,18 @@ describe "Matrix", ->
   it "should scale an existing matrix", ->
     moveX = 1; moveY = 2; moveZ = 3; scaleX = 2; scaleY = 0.5; scaleZ = 0.25
     m = Matrix.translation(moveX,moveY,moveZ).scale(scaleX,scaleY,scaleZ)
-    expect(m.elements()).toEqual [2, 0, 0, 0,
-                                  0, 0.5, 0, 0,
-                                  0, 0, 0.25, 0,
-                                  1, 2, 3, 1]
+    expect(m.elements()).toEqual [ 2,   0,    0, 0, 
+                                   0, 0.5,    0, 0, 
+                                   0,   0, 0.25, 0, 
+                                   2,   1, 0.75, 1 ]
 
   it "should create a look-at view matrix", ->
     eye = [0, 0, -10]; center = [0,0,0]; up = [0,1,0]
     v = Matrix.lookAt(eye,center,up)
-    expect(v.elements()).toEqual [-1, 0, 0, 0,
-                                  0, 1, 0, 0,
-                                  0, 0, -1, 0,
-                                  0, 0, -10, 1]
+    expect(v.elements()).toEqual [ -1, 0,  0, 0, 
+                                    0, 1,  0, 0, 
+                                    0, 0, -1, 0, 
+                                    0, 0, 10, 1 ]
 
   it "should create an orthographic projection matrix", ->
     left = -2; right = 2; bottom = -2; top = 2; near = 1; far = 100
@@ -125,7 +125,7 @@ describe "Matrix", ->
   it "should multiply two matrices", ->
     a = new Matrix([1,2,3,4, 5,6,7,8, 9,0,1,2, 3,4,5,6])
     b = new Matrix([0,9,8,7, 6,5,4,3, 2,1,0,9, 8,7,6,5])
-    expect(a.multiply(b).elements()).toEqual [ 50, 50, 40, 60,
-                                              114, 138, 112, 156,
-                                              18, 96, 84, 82,
-                                              82, 94, 76, 108 ]
+    expect(a.multiply(b).elements()).toEqual [ 138, 82, 106, 130, 
+                                                76, 54,  72,  90, 
+                                                34, 46,  58,  70, 
+                                               112, 78, 104, 130 ]

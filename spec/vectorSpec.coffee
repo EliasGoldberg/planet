@@ -25,4 +25,4 @@ describe "Vector", ->
     expect(Vector.nor [0,0,1], [0,1,0]).toEqual [1,0,0]
 
   it "should print a pretty string", ->
-    expect(new Vector([1,2,3]).toString()).toEqual "1, 2, 3"
+    expect(new Vector([1,2,3]).toString()).toEqual "1.0000, 2.0000, 3.0000"

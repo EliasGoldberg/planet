@@ -55,4 +55,4 @@ class @Vector
 
   cols: () -> [[@a[0],@a[1],@a[2],1]]
 
-  toString: -> "#{@a[0]}, #{@a[1]}, #{@a[2]}"
+  toString: -> "#{@a[0].toFixed(4)}, #{@a[1].toFixed(4)}, #{@a[2].toFixed(4)}"

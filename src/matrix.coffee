@@ -75,7 +75,24 @@ class @Matrix
   rows: -> @m[i..i+3] for i in [0..@m.length-1] by 4
   cols: -> [@m[i], @m[i+4], @m[i+8], @m[i+12]] for i in [0..3]
 
-  multiply: (b) -> Matrix.flatten(r[0]*c[0] + r[1]*c[1] + r[2]*c[2] + r[3]*c[3] for c in b.cols() for r in this.rows())
+  multiply: (b) -> if b instanceof Matrix then this.multiplyMatrix(b) else this.multiplyVector(b) 
+
+  multiplyMatrix: (b) ->
+    r = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]
+    for i in [0..3]
+      r[i]    = @m[i] * b.m[0]  + @m[i+4] * b.m[1]  + @m[i+8] * b.m[2]  + @m[i+12] * b.m[3]
+      r[i+4]  = @m[i] * b.m[4]  + @m[i+4] * b.m[5]  + @m[i+8] * b.m[6]  + @m[i+12] * b.m[7]
+      r[i+8]  = @m[i] * b.m[8]  + @m[i+4] * b.m[9]  + @m[i+8] * b.m[10] + @m[i+12] * b.m[11]
+      r[i+12] = @m[i] * b.m[12] + @m[i+4] * b.m[13] + @m[i+8] * b.m[14] + @m[i+12] * b.m[15]
+    new Matrix(r)
+
+  multiplyVector: (b) ->
+    r = [0,0,0,1]
+    r[0] = b.a[0] * @m[0] + b.a[1] * @m[4] + b.a[2] * @m[ 8] +  @m[12]
+    r[1] = b.a[0] * @m[1] + b.a[1] * @m[5] + b.a[2] * @m[ 9] +  @m[13]
+    r[2] = b.a[0] * @m[2] + b.a[1] * @m[6] + b.a[2] * @m[10] +  @m[14]
+    r[3] = b.a[0] * @m[3] + b.a[1] * @m[7] + b.a[2] * @m[11] +  @m[15]
+    new Vector([r[0] / r[3], r[1] / r[3], r[2] / r[3]])
 
   toString: ->
     "#{@m[0]}, #{@m[1]}, #{@m[2]}, #{@m[3]}\n#{@m[4]}, #{@m[5]}, #{@m[6]}, #{@m[7]}\n#{@m[8]}, #{@m[9]}, #{@m[10]}, #{@m[11]}\n#{@m[12]}, #{@m[13]}, #{@m[14]}, #{@m[15]}"

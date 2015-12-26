@@ -13,7 +13,8 @@ Once node.js is installed:
 
 To compile the coffeescript into javascript whenever a .coffee file is changed:
 - Install coffee-script globally: `npm install -g coffee-script`
-- In a new terminal window: `coffee -wcm src/*.coffee`
+- In a new terminal window, navigate to the project directory
+- `coffee -wcm src/*.coffee spec/*.coffee`
 
 To run unit tests:
 - Install Firefox (Or change the karma.conf.js file to use Chrome or whatever.)
@@ -30,4 +31,4 @@ To serve the project locally:
 
 To reload the project in the browser whenever a file is saved:
 - Install yet more global dependencies: `npm install -g supervisor reload`
-- Start the file watcher: `reload -b -d src` (you cannot have the `node server.js` command running while doing this)
+- Start the file watcher: `reload -b` (you cannot have the `node server.js` command running while doing this.  Navigate to localhost:8080/src/index.html.  Using -d or -s to specify the index page seems to prevent the debugger from accessing the .coffee files.)
