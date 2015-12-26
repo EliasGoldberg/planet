@@ -122,8 +122,6 @@ $ ->
   rX = 0
   rY = 0
   z = 7
-  $(document.body).append('<div id="overlay"></div>')
-
 
   octahedron.animate = (elapsed) ->
     rX += if dragging? and dragging then diffX else 0
@@ -137,28 +135,8 @@ $ ->
     pvm = proj.multiply(view).multiply(model)
     c = new Vector([0,0,z])
     octahedron.detail(model,c)
-
-
-    #centroid = pvm.multiply(octahedron.faces[0].centroid)
     centroid = model.multiply(octahedron.faces[0].centroid)
-    $('#overlay').css({
-      position:'fixed',
-      color:'red',
-      left:10 + 'px',
-      top:10 + 'px'
-    })
-    $('#overlay').text(
-      " transformed vertices: " + 
-      model.multiply(octahedron.faces[0].v[0]).toString() + "; " +
-      model.multiply(octahedron.faces[0].v[1]).toString() + "; " +
-      model.multiply(octahedron.faces[0].v[2]).toString() + "; " +
-      " centroid: " + octahedron.faces[0].centroid.toString() + 
-      " transformed centroid: " + centroid.toString() + 
-      " camera: " + c.toString() + 
-      " distance: " + c.distance(centroid).toFixed(4) +
-      " divide dist: " + octahedron.faces[0].divideDistance.toFixed(4) +
-      " rX: " + (-rX * 0.4 % 360).toFixed(4) + " rY: " + (-rY * 0.4 % 360).toFixed(4))
-    
+     
   octahedron.draw = -> gl.drawElements(gl.TRIANGLES, octahedron.indices.length, gl.UNSIGNED_SHORT, 0)
 
   engine = new Engine(gl)
@@ -193,4 +171,3 @@ setCanvasSize = ->
   canvas.style.width  = window.innerWidth  + "px"
   canvas.style.height = window.innerHeight + "px"
   canvas
-
