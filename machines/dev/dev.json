@@ -1,0 +1,36 @@
+{
+  "builders": [{
+  "type": "virtualbox-iso",
+  "boot_command": [
+    "<esc><esc><enter><wait>",
+    "/install/vmlinuz noapic preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+    "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
+    "hostname={{ .Name }} ",
+    "fb=false debconf/frontend=noninteractive ",
+    "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA keyboard-configuration/variant=USA console-setup/ask_detect=false ",
+    "initrd=/install/initrd.gz -- <enter>"
+  ],
+  "headless": true,
+  "boot_wait": "10s",
+  "disk_size": 20480,
+  "guest_os_type": "Ubuntu_64",
+  "iso_url": "http://cdimage.ubuntu.com/lubuntu/releases/15.04/release/lubuntu-15.04-desktop-amd64.iso",
+  "iso_checksum": "606dce414efb491c5aaed24b4d269a2f",
+  "iso_checksum_type": "md5",
+  "ssh_username": "vagrant",
+  "ssh_password": "vagrant",
+  "shutdown_command": "echo 'packer' | sudo -S shutdown -P now"
+}],
+  "provisioners": [{
+    "type": "shell",
+    "inline": [
+      "sleep 30",
+      "sudo yum -y update",
+      "sudo yum -y install git",
+      "sudo yum -y install nano"
+    ]
+  }],
+  "post-processors": [{
+    "type": "vagrant"
+  }]
+}

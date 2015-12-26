@@ -1,0 +1,48 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": ""
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "access_key": "{{user `aws_access_key`}}",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "region": "us-east-1",
+    "source_ami": "ami-96a818fe",
+    "instance_type": "t2.micro",
+    "ssh_username": "centos",
+    "ami_name": "boink {{timestamp}}",
+    "ssh_pty": true,
+    "region": "us-east-1"
+  }],
+  "provisioners": [{
+    "type": "shell",
+    "inline": [
+      "sleep 30",
+      "sudo yum -y update",
+      "sudo yum -y install git",
+      "sudo yum -y install nano",
+      "sudo yum -y install epel-release",
+      "sudo yum -y install nginx",
+      "sudo systemctl start nginx",
+      "sudo systemctl enable nginx",
+      "sudo yum -y install firewalld",
+      "sudo systemctl start firewalld",
+      "sudo systemctl enable firewalld",
+      "sudo firewall-cmd --permanent --zone=public --add-service=http",
+      "sudo firewall-cmd --permanent --zone=public --add-service=https",
+      "sudo firewall-cmd --reload",
+      "sudo rm -rf /usr/share/nginx/html/*",
+      "sudo yum -y install ruby",
+      "curl -O https://bootstrap.pypa.io/get-pip.py",
+      "sudo python get-pip.py",
+      "sudo pip install awscli",
+      "rm get-pip.py",
+      "cd /home/centos",
+      "aws s3 cp s3://aws-codedeploy-us-east-1/latest/install . --region us-east-1",
+      "sudo chmod +x ./install",
+      "sudo ./install auto",
+      "rm install"
+    ]
+  }]
+}

@@ -4,3 +4,5 @@ spec/*.js
 machines/boink.vars
 node_modules/
 *.pem
+
+*.iso
