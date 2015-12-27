@@ -6,25 +6,34 @@ class @Face
     @children = []
     @level = if lvl? then lvl else 0
     @divideDistance = v0.distance(v1) * 5
+    @string = "#{@v[0]}\n#{@v[1]}\n#{@v[2]}"
 
-  detail: (pvm,camera,results) ->
-    if not results? then results = { remove: [], add: [] }
-    tranformedCentroid = pvm.multiply(@centroid)
-    d = camera.distance(tranformedCentroid)
-    if d < @divideDistance
-      if @children.length is 0
-        results.remove.push(this)
-        results.add = results.add.concat(this.tessellate(1,Vector.slerp))
-      else
-        for child in @children
-          child.detail(pvm,camera,results)
-    else
+  detail: (pvm,camera,results,lvl) ->
+    if not results? then results = { remove: [], add: []}
+    if not lvl? then lvl = 1
+
+    if lvl is 1 and this.isBackFacing(camera,pvm)
       if @children.length is 4
         results.add.push(this)
         for child in @children
           results.remove = results.remove.concat(child.getLeafFaces())
         @children = []
-
+    else 
+      tranformedCentroid = pvm.multiply(@centroid)
+      d = camera.distance(tranformedCentroid)
+      if d < @divideDistance
+        if @children.length is 0
+          results.remove.push(this)
+          results.add = results.add.concat(this.tessellate(1,Vector.lerp))
+        else
+          for child in @children
+            child.detail(pvm,camera,results,lvl+1)
+      else
+        if @children.length is 4
+          results.add.push(this)
+          for child in @children
+            results.remove = results.remove.concat(child.getLeafFaces())
+          @children = []
 
   getLeafFaces: () ->
     leaves = []
@@ -34,7 +43,6 @@ class @Face
     else
       leaves.push(this)
     leaves
-
 
   getCentroid: () ->
     return new Vector([(@v[0].a[0] + @v[1].a[0] + @v[2].a[0])/3,
@@ -67,9 +75,20 @@ class @Face
     .concat(f2.tessellate(subdivisions-1,midpointFunction))
     .concat(f3.tessellate(subdivisions-1,midpointFunction))
 
+  getNormal: (pvm) ->
+    v1 = pvm.multiply(@v[1]).minus(pvm.multiply(@v[0]))
+    v2 = pvm.multiply(@v[2]).minus(pvm.multiply(@v[0]))
+    v1.crossProduct(v2).normalize()
+  
+  isBackFacing: (camera,pvm) ->
+    normal = this.getNormal(pvm)
+    cVec = new Vector([0,0,0]).minus(camera).normalize()
+    dot = normal.dotProduct(cVec)
+    dot > 0
+
   setBary: (bary,i) -> @b[i] = bary
   setBarys: (barys) -> @b = barys
 
   midpoint: (a, b) -> [(a.a[0] + b.a[0]) / 2, (a.a[1] + b.a[1]) / 2, (a.a[2] + b.a[2]) / 2]
 
-  toString: () -> "#{@v[0]}\n#{@v[1]}\n#{@v[2]}"
+  toString: () -> @string

@@ -1,7 +1,8 @@
 class @Vector
-  constructor: (@a) ->
+  constructor: (@a) -> @string = "#{@a[0].toFixed(4)}, #{@a[1].toFixed(4)}, #{@a[2].toFixed(4)}"
   array: -> new Float32Array(@a)
   elements: -> @a
+
 
   normalize: ->
     rlf = 1 / Math.sqrt(@a[0]*@a[0] + @a[1]*@a[1] + @a[2]*@a[2])
@@ -55,4 +56,4 @@ class @Vector
 
   cols: () -> [[@a[0],@a[1],@a[2],1]]
 
-  toString: -> "#{@a[0].toFixed(4)}, #{@a[1].toFixed(4)}, #{@a[2].toFixed(4)}"
+  toString: -> @string

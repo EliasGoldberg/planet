@@ -54,22 +54,30 @@ class @Model
     @indices.push(index)
 
   removeFaces: (faces) ->
+    vertexRefCountToZero = 0
+    laterIndexIndices = 0
+    laterIndexVtoIMap = 0
     for face in faces
       for vertex in face.v
         @vertexReferenceCounts[vertex.toString()]--
         if @vertexReferenceCounts[vertex.toString()] is 0
+          vertexRefCountToZero++
           index = @vertexToIndexMap[vertex.toString()]
           @vertices.splice(index*@stride,@stride)
           delete @vertexToIndexMap[vertex.toString()]
-          for laterIndex,i in @indices when laterIndex > index then @indices[i]--
+          for laterIndex,i in @indices when laterIndex > index
+            @indices[i]--
+            laterIndexIndices++
           for v,laterIndex of @vertexToIndexMap when laterIndex  > index
             @vertexToIndexMap[v]--
+            laterIndexVtoIMap++
 
       location = @faceToIndexLocationMap[face.toString()]
       @indices.splice(location, 3)
       delete @faceToIndexLocationMap[face.toString()]
       for otherFace,otherLocation of @faceToIndexLocationMap when otherLocation > location
         @faceToIndexLocationMap[otherFace] = otherLocation - 3
+    console.log("vertices: #{@vertices.length}, indices: #{@indices.length}, faces: #{faces.length}, ref zeros: #{vertexRefCountToZero}, laterIndices: #{laterIndexIndices}, laterVtoIMap: #{laterIndexVtoIMap}")
 
   vertexExists: (v) -> @vertexToIndexMap[v.toString()]?
 
