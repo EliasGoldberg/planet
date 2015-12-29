@@ -9,9 +9,10 @@ class @Model
     @vertices = []
     @indices = []
 
-    @stride = 6
+    @stride = 7
     @pointers = [{name: 'a_Position', dim: 3, offset: 0}
-                {name: 'a_Bary', dim: 3, offset: 3}]
+                {name: 'a_Bary', dim: 3, offset: 3}
+                {name: 'a_Triangle', dim: 1, offset:6}]
     @uniforms = []
     @textures = []
     @modifiers = []
@@ -30,16 +31,24 @@ class @Model
       this.addFaces(results.add)
       this.buildModel()
 
+  tessellate: (subdivisions,midpointFunction) ->
+    newFaces = []
+    for face in this.faces
+      subFaces = face.tessellate(subdivisions,midpointFunction)
+      newFaces = newFaces.concat(subFaces)
+    this.addFaces(newFaces)
+    this.removeFaces(this.faces)
+    this.buildModel()
 
   addFaces: (faces) ->
-    for face in faces
+    for face,fIdx in faces
       @faceToIndexLocationMap[face.toString()] = @indices.length
       for i in [0..2]
         vertex = face.v[i]
         if not this.vertexExists(vertex)
           bary = this.getBary(face,i)
           face.setBary(bary,i)
-          @vertices = @vertices.concat(vertex.elements()).concat(bary)
+          @vertices = @vertices.concat(vertex.elements()).concat(bary).concat([fIdx])
           @vertexReferenceCounts[vertex.toString()] = 1
         else
           @vertexReferenceCounts[vertex.toString()]++
@@ -77,7 +86,6 @@ class @Model
       delete @faceToIndexLocationMap[face.toString()]
       for otherFace,otherLocation of @faceToIndexLocationMap when otherLocation > location
         @faceToIndexLocationMap[otherFace] = otherLocation - 3
-    console.log("vertices: #{@vertices.length}, indices: #{@indices.length}, faces: #{faces.length}, ref zeros: #{vertexRefCountToZero}, laterIndices: #{laterIndexIndices}, laterVtoIMap: #{laterIndexVtoIMap}")
 
   vertexExists: (v) -> @vertexToIndexMap[v.toString()]?
 

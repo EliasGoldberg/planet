@@ -1,55 +1,75 @@
 $ ->
   Math.seedrandom('goldberg')
   canvas = setCanvasSize()
-  gl = canvas.getContext('webgl')
+  gl = canvas.getContext('webgl2')
   gl.enable(gl.DEPTH_TEST)
-  gl.enable(gl.CULL_FACE);
+  gl.enable(gl.CULL_FACE)
   gl.clearColor(0.1,0.0,0.5,1.0)
-  gl.getExtension('OES_standard_derivatives')
+  RADIUS = 6370000
 
   program = new ShaderProgram(gl)
 
   program.addShader(gl.VERTEX_SHADER,'''
+    #version 300 es
     #define M_PI 3.1415926535897932384626433832795
-    attribute vec4 a_Position;
-    attribute vec3 a_Bary;
-    varying vec3 v_Bary;
-    varying highp vec4 v_Pos;
+    in highp vec4 a_Position;
+    in vec3 a_Bary;
+    in float a_Triangle;
+    out vec3 v_Bary;
+    out vec3 pos;
+    flat out int v_Triangle;
+    flat out int v_InstanceId;
     uniform mediump mat4 u_ModelMatrix;
     uniform mediump mat4 u_ViewMatrix;
     uniform mediump mat4 u_ProjMatrix;
-    uniform mediump vec3 featurePoints[20];
-    uniform float plateElevations[20];
 
-    int nearest(vec4 pos) {
-      int near_idx = 0;
-      float d = 1000.0;
-      for (int i = 0; i < 20; i++) {
-        float current = acos(dot(vec3(pos.xyz),featurePoints[i])) / M_PI * 3.0;
-        if (current < d) {
-            d = current;
-            near_idx = i;
-        }
-      }
-      return near_idx;
-    }
+    mat4 oMat[8] = mat4[](
+      //    0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+      mat4( 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),      // 0
+      mat4( 0, 0, 1, 0, 0, 1, 0, 0,-1, 0, 0, 0, 0, 0, 0, 1),      // 1
+      mat4(-1, 0, 0, 0, 0, 1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 1),      // 2
+      mat4( 0, 0,-1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1),      // 3
+      mat4(-1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),      // 4
+      mat4( 0, 0,-1, 0, 0,-1, 0, 0,-1, 0, 0, 0, 0, 0, 0, 1),      // 5
+      mat4( 1, 0, 0, 0, 0,-1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 1),      // 6
+      mat4( 0, 0, 1, 0, 0,-1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1));     // 7
 
     void main() {
-      //int i = nearest(a_Position);
-      //vec4 pos = vec4(a_Position.xyz * plateElevations[i], 1.0);
-      gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
+      vec4 pos = a_Position;
+      pos = vec4(normalize(a_Position.xyz),1.0);
+      if (gl_InstanceID < 8) {
+        pos = oMat[gl_InstanceID] * vec4(pos.xyz*float(''' + RADIUS.toString() + '''),1.0);
+      } else {
+        pos = vec4(pos.xyz*float(''' + RADIUS.toString() + '''),1.0);
+      }
+      pos = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * pos;
+      gl_Position = pos;
       v_Bary = a_Bary;
-      v_Pos = a_Position;
+      v_Triangle = int(a_Triangle);
+      v_InstanceId = gl_InstanceID;
     }
   ''')
 
   program.addShader(gl.FRAGMENT_SHADER,'''
-    #extension GL_OES_standard_derivatives : enable
+    #version 300 es
     #define M_PI 3.1415926535897932384626433832795
     precision mediump float;
-    varying vec3 v_Bary;
-    varying highp vec4 v_Pos;
-    uniform mediump vec3 featurePoints[20];
+    in vec3 v_Bary;
+    in vec3 pos;
+    flat in int v_Triangle;
+    flat in int v_InstanceId;
+    out vec4 fragcolor;
+    uniform mediump vec2 u_discardPile[3];
+
+    vec3 colors[8] = vec3[](
+        vec3(1.0,1.0,1.0),   // 0 - white
+        vec3(1.0,1.0,0.0),   // 1 - yellow
+        vec3(1.0,0.0,1.0),   // 2 - purple
+        vec3(1.0,0.0,0.0),   // 3 - red
+        vec3(0.0,1.0,1.0),   // 4 - teal
+        vec3(0.0,1.0,0.0),   // 5 - green
+        vec3(0.0,0.0,1.0),   // 6 - blue
+        vec3(0.0,0.0,0.0));  // 7 - black
 
     float edgeFactor(){
       vec3 d = fwidth(v_Bary);
@@ -57,43 +77,19 @@ $ ->
       return min(min(a3.x, a3.y), a3.z);
     }
 
-    vec2 nearest(vec4 pos) {
-      float d = 1000.0;
-      float d2 = 1000.0;
-      for (int i = 0; i < 20; i++) {
-        float current = acos(dot(vec3(pos.xyz),featurePoints[i])) / M_PI * 3.0;
-        if (current < d) {
-            d2 = d;
-            d = current;
-        } else if (current < d2) {
-            d2 = current;
-        }
-      }
-      return vec2(d,d2);
-    }
-
     void main() {
-      //vec2 near = nearest(v_Pos);
-      //float c = min(1.0,near[1] - near[0]);
-      vec3 faceColor = vec3(0.8,0.8,0.8);
+      if (int(u_discardPile[0].x) == v_InstanceId && int(u_discardPile[0].y) == v_Triangle) discard;
+      vec3 faceColor = colors[v_InstanceId];
       vec3 wireColor = vec3(0, 0, 0);
-      gl_FragColor = vec4(mix(wireColor, faceColor, edgeFactor()),1);
-      //gl_FragColor = vec4(faceColor,1.0);
+      fragcolor = vec4(mix(wireColor, faceColor, edgeFactor()),1);
     }
   ''')
 
-  featurePoints = (Vector.random().elements() for i in [0..19])
-  featurePoints = [].concat.apply([], featurePoints)
-  plateElevations = (1 + Math.random() * 0.025 for i in [0..19])
-
   program.activate()
-
-  program.setUniformVectorArray('featurePoints',featurePoints)
-  program.setUniformArray('plateElevations',plateElevations)
 
   setSize = ->
     gl.viewport(0, 0, canvas.width, canvas.height)
-    proj = Matrix.perspective(90, canvas.width / canvas.height, 0.1, 20)
+    proj = Matrix.perspective(90, canvas.width / canvas.height, 1, RADIUS*10)
     program.setUniformMatrix('u_ProjMatrix', proj.array())
 
   setSize()
@@ -103,16 +99,13 @@ $ ->
     setSize()
   )
 
-  octaFaces = [ new Face(new Vector([0, 1,0]), new Vector([ 0, 0, 1]), new Vector([ 1, 0, 0])),  # 0
-                new Face(new Vector([0, 1,0]), new Vector([-1, 0, 0]), new Vector([ 0, 0, 1])),  # 1
-                new Face(new Vector([0, 1,0]), new Vector([ 0, 0,-1]), new Vector([-1, 0, 0])),  # 2
-                new Face(new Vector([0, 1,0]), new Vector([ 1, 0, 0]), new Vector([ 0, 0,-1])),  # 3
-                new Face(new Vector([0,-1,0]), new Vector([ 1, 0, 0]), new Vector([ 0, 0, 1])),  # 4
-                new Face(new Vector([0,-1,0]), new Vector([ 0, 0, 1]), new Vector([-1, 0, 0])),  # 5
-                new Face(new Vector([0,-1,0]), new Vector([-1, 0, 0]), new Vector([ 0, 0,-1])),  # 6
-                new Face(new Vector([0,-1,0]), new Vector([ 0, 0,-1]), new Vector([ 1, 0, 0])) ] # 7
+  v0 = new Vector([0, 1, 0])
+  v1 = new Vector([0, 0, 1])
+  v2 = new Vector([1, 0, 0])
+  octahedron = new Model(gl,program,[new Face(v0,v1,v2)])
+  octahedron.tessellate(3)
 
-  octahedron = new Model(gl,program,octaFaces)
+  program.setUniformVectorArray('u_discardPile',[1,3,2,7,3,5],2)
 
   diffX = 0
   diffY = 0
@@ -121,7 +114,10 @@ $ ->
   y = 0
   rX = 0
   rY = 0
-  z = 7
+  z = RADIUS * 2
+
+  $(document.body).append('<div id="overlay"></div>')
+  $('#overlay').css({ position:'fixed', color:'white', left:10 + 'px', top:10 + 'px' })
 
   octahedron.animate = (elapsed) ->
     rX += if dragging? and dragging then diffX else 0
@@ -131,13 +127,11 @@ $ ->
     program.setUniformMatrix('u_ModelMatrix', model.array())
     view = Matrix.lookAt([0, 0, z],[0,0,0],[0,1,0])
     program.setUniformMatrix('u_ViewMatrix', view.array())
-    proj = Matrix.perspective(90, canvas.width / canvas.height, 0.1, 20)
+    proj = Matrix.perspective(90, canvas.width / canvas.height, 1, RADIUS*10)
     pvm = proj.multiply(view).multiply(model)
     c = new Vector([0,0,z])
-    octahedron.detail(model,c)
     centroid = model.multiply(octahedron.faces[0].centroid)
-     
-  octahedron.draw = -> gl.drawElements(gl.TRIANGLES, octahedron.indices.length, gl.UNSIGNED_SHORT, 0)
+  octahedron.draw = -> gl.drawElementsInstanced(gl.TRIANGLES, octahedron.indices.length, gl.UNSIGNED_SHORT, 0, 8)
 
   engine = new Engine(gl)
   engine.addModel(octahedron)
@@ -158,8 +152,9 @@ $ ->
 
   $("#gl").mouseup (e)-> dragging = false
   $('#gl').mousewheel (e) ->
-    delta = Math.min(0.04, (z-1) * 0.1)
-    z += e.deltaY * delta
+    toSurface = z-RADIUS
+    z = Math.min(Math.max(RADIUS+2,z + toSurface * e.deltaY * 0.01),20000000)
+    $('#overlay').text("z: #{z.toFixed(2)}, deltaY: #{e.deltaY}, to surface: #{(z-RADIUS).toFixed(2)}")
     
 setCanvasSize = ->
   canvas = document.getElementById('gl')

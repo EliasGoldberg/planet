@@ -3,18 +3,18 @@
   "version": "0.0.0",
   "description": "webgl using coffeescript",
   "devDependencies": {
-    "karma": "~0.13.9",
+    "coffee-script": "~1.10.0",
+    "connect": "~3.0.0",
+    "jasmine": "~2.3.2",
+    "jasmine-core": "~2.3.4",
+    "karma": "~0.13.16",
+    "karma-chrome-launcher": "~0.2.0",
+    "karma-firefox-launcher": "~0.1.6",
     "karma-jasmine": "~0.3.6",
     "karma-phantomjs-launcher": "~0.2.1",
     "phantomjs": "~1.9.18",
-    "karma-firefox-launcher": "~0.1.6",
-    "karma-chrome-launcher": "~0.2.0",
-    "jasmine": "~2.3.2",
-    "jasmine-core": "~2.3.4",
-    "coffee-script": "~1.10.0",
-    "connect": "~3.0.0",
-    "serve-static": "~1.10.0",
-    "reload": "~0.5.0"
+    "reload": "~0.5.0",
+    "serve-static": "~1.10.0"
   },
   "scripts": {
     "pretest": "coffee -c spec src",

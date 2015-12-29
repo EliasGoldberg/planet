@@ -31,4 +31,10 @@ To serve the project locally:
 
 To reload the project in the browser whenever a file is saved:
 - Install yet more global dependencies: `npm install -g supervisor reload`
-- Start the file watcher: `reload -b` (you cannot have the `node server.js` command running while doing this.  Navigate to localhost:8080/src/index.html.  Using -d or -s to specify the index page seems to prevent the debugger from accessing the .coffee files.)
+- Start the file watcher: `reload` (you cannot have the `node server.js` command running while doing this.  Navigate to localhost:8080/src/index.html.  Using -d or -s to specify the index page seems to prevent the debugger from accessing the .coffee files.)
+
+This project uses WebGL 2.0.  Right now, you need an daily build browser to run it.  I use [Google Chrome Canary](https://www.google.com/chrome/browser/canary.html).
+- Download and install the browser
+- Add `alias canary='/Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary --enable-unsafe-es3-apis'` to your .bash_profile.
+- In a new terminal window, type `canary` to open Chrome Canary
+- Since this is the only thing I use Chrome Canary for, I have its homepage set to http://localhost:8080/src/index.html
