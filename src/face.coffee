@@ -1,7 +1,7 @@
 class @Face
   constructor: (v0,v1,v2,lvl) ->
     @v = [v0,v1,v2]
-    @b = []
+    @b = [[1,0,0],[0,1,0],[0,0,1]]
     @centroid = this.getCentroid()
     @children = []
     @level = if lvl? then lvl else 0

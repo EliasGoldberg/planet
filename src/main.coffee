@@ -1,5 +1,4 @@
 $ ->
-  Math.seedrandom('goldberg')
   canvas = setCanvasSize()
   gl = canvas.getContext('webgl2')
   gl.enable(gl.DEPTH_TEST)
@@ -16,7 +15,6 @@ $ ->
     in vec3 a_Bary;
     in float a_Triangle;
     out vec3 v_Bary;
-    out vec3 pos;
     flat out int v_Triangle;
     flat out int v_InstanceId;
     uniform mediump mat4 u_ModelMatrix;
@@ -55,7 +53,6 @@ $ ->
     #define M_PI 3.1415926535897932384626433832795
     precision mediump float;
     in vec3 v_Bary;
-    in vec3 pos;
     flat in int v_Triangle;
     flat in int v_InstanceId;
     out vec4 fragcolor;
@@ -69,7 +66,7 @@ $ ->
         vec3(0.0,1.0,1.0),   // 4 - teal
         vec3(0.0,1.0,0.0),   // 5 - green
         vec3(0.0,0.0,1.0),   // 6 - blue
-        vec3(0.0,0.0,0.0));  // 7 - black
+        vec3(0.2,0.2,0.2));  // 7 - gray
 
     float edgeFactor(){
       vec3 d = fwidth(v_Bary);
@@ -103,7 +100,7 @@ $ ->
   v1 = new Vector([0, 0, 1])
   v2 = new Vector([1, 0, 0])
   octahedron = new Model(gl,program,[new Face(v0,v1,v2)])
-  octahedron.tessellate(3)
+  octahedron = octahedron.tessellate(3)
 
   program.setUniformVectorArray('u_discardPile',[1,3,2,7,3,5],2)
 
@@ -129,9 +126,7 @@ $ ->
     program.setUniformMatrix('u_ViewMatrix', view.array())
     proj = Matrix.perspective(90, canvas.width / canvas.height, 1, RADIUS*10)
     pvm = proj.multiply(view).multiply(model)
-    c = new Vector([0,0,z])
-    centroid = model.multiply(octahedron.faces[0].centroid)
-  octahedron.draw = -> gl.drawElementsInstanced(gl.TRIANGLES, octahedron.indices.length, gl.UNSIGNED_SHORT, 0, 8)
+  octahedron.draw = -> gl.drawArraysInstanced(gl.TRIANGLES, 0, octahedron.vertexCount(), 8)
 
   engine = new Engine(gl)
   engine.addModel(octahedron)
@@ -153,7 +148,7 @@ $ ->
   $("#gl").mouseup (e)-> dragging = false
   $('#gl').mousewheel (e) ->
     toSurface = z-RADIUS
-    z = Math.min(Math.max(RADIUS+2,z + toSurface * e.deltaY * 0.01),20000000)
+    z = Math.min(Math.max(RADIUS+2,z + toSurface * e.deltaY * 0.01),17500000)
     $('#overlay').text("z: #{z.toFixed(2)}, deltaY: #{e.deltaY}, to surface: #{(z-RADIUS).toFixed(2)}")
     
 setCanvasSize = ->
