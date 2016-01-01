@@ -126,9 +126,11 @@ $ ->
   v2 = new Vector([1, 0, 0])
   octahedron = new Model(gl,program,new Face(v0,v1,v2).tessellate(3))
 
-  subPatch = new Model(gl,program,octahedron.faces[3].tessellate(3))
-  d = octahedron.faces[19].v[0].minus(octahedron.faces[3].v[0])
-  patchMatrix = Matrix.translation(d.a[0],d.a[1],d.a[2])
+  subPatch = new Model(gl,program,new Face(v0,v1,v2).tessellate(3))
+  d = octahedron.faces[19].v[0].minus(v0)
+
+  patchMatrix = Matrix.scalation(1/8,1/8,1/8)
+    .translate(d.a[0]+v0.a[0]*(7/8),d.a[1]+v0.a[1]*(7/8),d.a[2]+v0.a[2]*(7/8))
   program.setUniformVectorArray('u_discardPile',[0,19],2)
 
   diffX = 0
@@ -185,7 +187,7 @@ $ ->
   $("#gl").mouseup (e)-> dragging = false
   $('#gl').mousewheel (e) ->
     toSurface = z-RADIUS
-    z = Math.min(Math.max(RADIUS+2,z + toSurface * e.deltaY * 0.01),17500000)
+    z = Math.max(RADIUS+2,z + toSurface * e.deltaY * 0.01)
     $('#overlay').text("z: #{z.toFixed(2)}, deltaY: #{e.deltaY}, to surface: #{(z-RADIUS).toFixed(2)}")
     
 setCanvasSize = ->
