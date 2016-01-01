@@ -47,6 +47,11 @@ class @Model
     s = @bufferByteCounts[@arrayBuffer]
     @program.setAttribPointer(@arrayBuffer, p.name, p.dim, @stride*s, p.offset*s) for p in @pointers
 
+  activate: ->
+    @gl.bindBuffer(@gl.ARRAY_BUFFER, @arrayBuffer);
+    s = @bufferByteCounts[@arrayBuffer]
+    @program.setAttribPointer(@arrayBuffer, p.name, p.dim, @stride*s, p.offset*s) for p in @pointers
+
   makeArrayBuffer: (bufferData) ->
     if !@arrayBuffer? then @arrayBuffer = @gl.createBuffer()
     floatArray = new Float32Array(bufferData)

@@ -17,9 +17,12 @@ $ ->
     out vec3 v_Bary;
     flat out int v_Triangle;
     flat out int v_InstanceId;
+    flat out int v_subpatch;
     uniform mediump mat4 u_ModelMatrix;
     uniform mediump mat4 u_ViewMatrix;
     uniform mediump mat4 u_ProjMatrix;
+    uniform float subpatch;
+    uniform mediump mat4 u_PatchMatrix;
 
     mat4 oMat[8] = mat4[](
       //    0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
@@ -33,18 +36,30 @@ $ ->
       mat4( 0, 0, 1, 0, 0,-1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1));     // 7
 
     void main() {
+
+      //if (gl_InstanceID == u_patches[0].w) {
+
+      //}
+
       vec4 pos = a_Position;
-      pos = vec4(normalize(a_Position.xyz),1.0);
-      if (gl_InstanceID < 8) {
-        pos = oMat[gl_InstanceID] * vec4(pos.xyz*float(''' + RADIUS.toString() + '''),1.0);
-      } else {
+      
+      if (gl_InstanceID < 8 && subpatch == -1.0) {
+        pos = vec4(normalize(a_Position.xyz),1.0);
         pos = vec4(pos.xyz*float(''' + RADIUS.toString() + '''),1.0);
+        pos = oMat[gl_InstanceID] * pos;
+      } else {
+        pos = u_PatchMatrix * pos;
+        pos = vec4(normalize(pos.xyz),1.0);
+        pos = vec4(pos.xyz*float(''' + RADIUS.toString() + '''),1.0);
+        
+
       }
       pos = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * pos;
       gl_Position = pos;
       v_Bary = a_Bary;
       v_Triangle = int(a_Triangle);
       v_InstanceId = gl_InstanceID;
+      v_subpatch = int(subpatch);
     }
   ''')
 
@@ -55,8 +70,9 @@ $ ->
     in vec3 v_Bary;
     flat in int v_Triangle;
     flat in int v_InstanceId;
+    flat in int v_subpatch;
     out vec4 fragcolor;
-    uniform mediump vec2 u_discardPile[3];
+    uniform mediump vec2 u_discardPile[50];
 
     vec3 colors[8] = vec3[](
         vec3(1.0,1.0,1.0),   // 0 - white
@@ -75,18 +91,27 @@ $ ->
     }
 
     void main() {
-      if (int(u_discardPile[0].x) == v_InstanceId && int(u_discardPile[0].y) == v_Triangle) discard;
+      if (int(u_discardPile[0].x) == v_InstanceId && int(u_discardPile[0].y) == v_Triangle && v_subpatch == -1) discard;
       vec3 faceColor = colors[v_InstanceId];
       vec3 wireColor = vec3(0, 0, 0);
       fragcolor = vec4(mix(wireColor, faceColor, edgeFactor()),1);
     }
   ''')
 
+  diffX = 0
+  diffY = 0
+  dragging = false
+  x = 0
+  y = 0
+  rX = 0
+  rY = 0
+  z = RADIUS * 2
+
   program.activate()
 
   setSize = ->
     gl.viewport(0, 0, canvas.width, canvas.height)
-    proj = Matrix.perspective(90, canvas.width / canvas.height, 1, RADIUS*10)
+    proj = Matrix.perspective(90, canvas.width / canvas.height, z-RADIUS, z+RADIUS)
     program.setUniformMatrix('u_ProjMatrix', proj.array())
 
   setSize()
@@ -99,10 +124,12 @@ $ ->
   v0 = new Vector([0, 1, 0])
   v1 = new Vector([0, 0, 1])
   v2 = new Vector([1, 0, 0])
-  octahedron = new Model(gl,program,[new Face(v0,v1,v2)])
-  octahedron = octahedron.tessellate(3)
+  octahedron = new Model(gl,program,new Face(v0,v1,v2).tessellate(3))
 
-  program.setUniformVectorArray('u_discardPile',[1,3,2,7,3,5],2)
+  subPatch = new Model(gl,program,octahedron.faces[3].tessellate(3))
+  d = octahedron.faces[19].v[0].minus(octahedron.faces[3].v[0])
+  patchMatrix = Matrix.translation(d.a[0],d.a[1],d.a[2])
+  program.setUniformVectorArray('u_discardPile',[0,19],2)
 
   diffX = 0
   diffY = 0
@@ -124,9 +151,19 @@ $ ->
     program.setUniformMatrix('u_ModelMatrix', model.array())
     view = Matrix.lookAt([0, 0, z],[0,0,0],[0,1,0])
     program.setUniformMatrix('u_ViewMatrix', view.array())
-    proj = Matrix.perspective(90, canvas.width / canvas.height, 1, RADIUS*10)
+    proj = Matrix.perspective(90, canvas.width / canvas.height, z-RADIUS, z+RADIUS)
+    program.setUniformMatrix('u_ProjMatrix', proj.array())
     pvm = proj.multiply(view).multiply(model)
-  octahedron.draw = -> gl.drawArraysInstanced(gl.TRIANGLES, 0, octahedron.vertexCount(), 8)
+  
+  octahedron.draw = -> 
+    octahedron.activate()
+    program.setUniform('subpatch',-1)
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, octahedron.vertexCount(), 8)
+    
+    subPatch.activate()
+    program.setUniform('subpatch',0)
+    program.setUniformMatrix('u_PatchMatrix',patchMatrix.array())
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, subPatch.vertexCount(), 1)
 
   engine = new Engine(gl)
   engine.addModel(octahedron)
