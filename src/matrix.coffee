@@ -3,10 +3,11 @@ class @Matrix
   array: -> new Float32Array(@m)
   elements: -> @m
 
-  @identity: -> new Matrix([1,0,0,0,
-                            0,1,0,0,
-                            0,0,1,0,
-                            0,0,0,1])
+  @id = new Matrix([1,0,0,0,
+                    0,1,0,0,
+                    0,0,1,0,
+                    0,0,0,1])
+  @identity: -> @id
 
   @rotation: (angle,x,y,z) ->
     radian = Math.PI * angle / 180.0
