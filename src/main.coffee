@@ -20,34 +20,17 @@ $ ->
     uniform mediump mat4 u_ModelMatrix;
     uniform mediump mat4 u_ViewMatrix;
     uniform mediump mat4 u_ProjMatrix;
-    uniform mediump mat4 u_PatchMatrix[64];
-    uniform mediump vec2 u_discardPile[64];
+    uniform mediump mat4 u_PatchMatrix[100];
+    uniform mediump vec2 u_discardPile[100];
     uniform mediump float u_discardCount;
-
-    mat4 oMat[8] = mat4[](
-      //    0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
-      mat4( 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),      // 0
-      mat4( 0, 0, 1, 0, 0, 1, 0, 0,-1, 0, 0, 0, 0, 0, 0, 1),      // 1
-      mat4(-1, 0, 0, 0, 0, 1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 1),      // 2
-      mat4( 0, 0,-1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1),      // 3
-      mat4(-1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),      // 4
-      mat4( 0, 0,-1, 0, 0,-1, 0, 0,-1, 0, 0, 0, 0, 0, 0, 1),      // 5
-      mat4( 1, 0, 0, 0, 0,-1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 1),      // 6
-      mat4( 0, 0, 1, 0, 0,-1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1));     // 7
 
     void main() {
       vec4 pos = a_Position;
       
-      if (gl_InstanceID < 8) {
-        pos = vec4(normalize(pos.xyz),1.0);
-        pos = vec4(pos.xyz*float(''' + RADIUS.toString() + '''),1.0);
-        pos = oMat[gl_InstanceID] * pos;
-      } else {
-        pos = u_PatchMatrix[gl_InstanceID-8] * pos;
-        pos = vec4(normalize(pos.xyz),1.0);
-        pos = vec4(pos.xyz*float(''' + RADIUS.toString() + '''),1.0);
-        pos = oMat[int(u_discardPile[gl_InstanceID-8].x)] * pos;
-      }
+      pos = u_PatchMatrix[gl_InstanceID] * pos;
+      pos = vec4(normalize(pos.xyz),1.0);
+      pos = vec4(pos.xyz*float(''' + RADIUS.toString() + '''),1.0);
+      
       pos = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * pos;
       gl_Position = pos;
       v_Bary = a_Bary;
@@ -64,7 +47,7 @@ $ ->
     flat in int v_Triangle;
     flat in int v_InstanceId;
     out vec4 fragcolor;
-    uniform mediump vec2 u_discardPile[64];
+    uniform mediump vec2 u_discardPile[100];
     uniform mediump float u_discardCount;
 
     vec3 colors[8] = vec3[](
@@ -126,7 +109,8 @@ $ ->
   v1 = new Vector([0, 0, 1])
   v2 = new Vector([1, 0, 0])
   octahedron = new Model(gl,program,new Face(v0,v1,v2).tessellate(3))
-
+  
+  
   discards = [ 0,0,  1,1,  2,2,  3,3,  4,4,  5,5,  6,6,  7,7, 
                0,8,  1,9, 2,10, 3,11, 4,12, 5,13, 6,14, 7,15,
               0,16, 1,17, 2,18, 3,19, 4,20, 5,21, 6,22, 7,23,
@@ -134,23 +118,48 @@ $ ->
               0,32, 1,33, 2,34, 3,35, 4,36, 5,37, 6,38, 7,39,
               0,40, 1,41, 2,42, 3,43, 4,44, 5,45, 6,46, 7,47,
               0,48, 1,49, 2,50, 3,51, 4,52, 5,53, 6,54, 7,55,
-              0,56, 1,57, 2,58, 3,59, 4,60, 5,61, 6,62, 7,63]
+              0,56, 1,57, 2,58, 3,59, 4,60, 5,61, 6,62, 7,63, 8,0, 8+64,0]
+  
   patchMatrices = []
+  octantTransforms = [
+    Matrix.identity(), Matrix.rotation(90,0,1,0), 
+    Matrix.rotation(180,0,1,0), Matrix.rotation(270,0,1,0),
+    Matrix.scalation(-1,-1,1), Matrix.scalation(-1,-1,1).rotate(90,0,1,0),
+    Matrix.scalation(-1,-1,1).rotate(180,0,1,0), Matrix.scalation(-1,-1,1).rotate(270,0,1,0)
+  ]
+  octantArrays = []
+  for transformation in octantTransforms
+    octantArrays = octantArrays.concat(transformation.m) 
 
   tessellate = ->
-    patchMatrices = []
+    patchMatrices = [].concat(octantArrays)
+
     for idx in [0..discards.length-1] by 2
       discardOctant = discards[idx]
       discardFace = discards[idx+1]
-      axis = octahedron.faces[discardFace].getNormal(Matrix.identity())
-      d = octahedron.faces[discardFace].centroid.minus(octahedron.faces[0].centroid)
+      
       centerFlip = octahedron.faces[discardFace].isUpsidedown * 180
-      lowerFlip = 0
-      patchMatrix = Matrix.scalation(1/8,1/8,1/8)
-        .rotate(centerFlip + lowerFlip,axis.a[0],axis.a[1],axis.a[2])
-        .translate(d.a[0],d.a[1],d.a[2])
-        .translate(v0.a[0]*(7/8),v0.a[1]*(7/8),v0.a[2]*(7/8))
+      axis = octahedron.faces[discardFace].getNormal(Matrix.identity())
+
+      patchMatrix = Matrix.identity() 
+      nested = true
+      while nested
+        d = octahedron.faces[discardFace].centroid.minus(octahedron.faces[0].centroid)
+        patchMatrix = patchMatrix.multiply(
+          Matrix.scalation(1/8,1/8,1/8)
+          .translate(d.a[0],d.a[1],d.a[2])
+          .translate(v0.a[0]*(7/8),v0.a[1]*(7/8),v0.a[2]*(7/8))
+        )
+        if (discardOctant >= 8)
+          discardOctant = discards[(discardOctant-8)*2]
+        else
+          nested = false
+
+      patchMatrix = octantTransforms[discardOctant]
+        .multiply(patchMatrix)
+        .multiply(Matrix.rotation(centerFlip,axis.a[0],axis.a[1],axis.a[2]))
       patchMatrices = patchMatrices.concat(patchMatrix.m)
+
     program.setUniformVectorArray('u_discardPile',discards,2)
     program.setUniform('u_discardCount',discards.length / 2)
     program.setUniformMatrix('u_PatchMatrix',patchMatrices)
