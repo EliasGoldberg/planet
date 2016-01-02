@@ -17,12 +17,12 @@ $ ->
     out vec3 v_Bary;
     flat out int v_Triangle;
     flat out int v_InstanceId;
-    flat out int v_subpatch;
     uniform mediump mat4 u_ModelMatrix;
     uniform mediump mat4 u_ViewMatrix;
     uniform mediump mat4 u_ProjMatrix;
-    uniform float subpatch;
-    uniform mediump mat4 u_PatchMatrix;
+    uniform mediump mat4 u_PatchMatrix[64];
+    uniform mediump vec2 u_discardPile[64];
+    uniform mediump float u_discardCount;
 
     mat4 oMat[8] = mat4[](
       //    0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
@@ -36,30 +36,23 @@ $ ->
       mat4( 0, 0, 1, 0, 0,-1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1));     // 7
 
     void main() {
-
-      //if (gl_InstanceID == u_patches[0].w) {
-
-      //}
-
       vec4 pos = a_Position;
       
-      if (gl_InstanceID < 8 && subpatch == -1.0) {
-        pos = vec4(normalize(a_Position.xyz),1.0);
+      if (gl_InstanceID < 8) {
+        pos = vec4(normalize(pos.xyz),1.0);
         pos = vec4(pos.xyz*float(''' + RADIUS.toString() + '''),1.0);
         pos = oMat[gl_InstanceID] * pos;
       } else {
-        pos = u_PatchMatrix * pos;
+        pos = u_PatchMatrix[gl_InstanceID-8] * pos;
         pos = vec4(normalize(pos.xyz),1.0);
         pos = vec4(pos.xyz*float(''' + RADIUS.toString() + '''),1.0);
-        
-
+        pos = oMat[int(u_discardPile[gl_InstanceID-8].x)] * pos;
       }
       pos = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * pos;
       gl_Position = pos;
       v_Bary = a_Bary;
       v_Triangle = int(a_Triangle);
       v_InstanceId = gl_InstanceID;
-      v_subpatch = int(subpatch);
     }
   ''')
 
@@ -70,9 +63,9 @@ $ ->
     in vec3 v_Bary;
     flat in int v_Triangle;
     flat in int v_InstanceId;
-    flat in int v_subpatch;
     out vec4 fragcolor;
-    uniform mediump vec2 u_discardPile[50];
+    uniform mediump vec2 u_discardPile[64];
+    uniform mediump float u_discardCount;
 
     vec3 colors[8] = vec3[](
         vec3(1.0,1.0,1.0),   // 0 - white
@@ -91,8 +84,16 @@ $ ->
     }
 
     void main() {
-      if (int(u_discardPile[0].x) == v_InstanceId && int(u_discardPile[0].y) == v_Triangle && v_subpatch == -1) discard;
-      vec3 faceColor = colors[v_InstanceId];
+      for (int i = 0; i<int(u_discardCount);++i) {
+        if (int(u_discardPile[i].x) == v_InstanceId && int(u_discardPile[i].y) == v_Triangle) discard;
+      }
+      
+      vec3 faceColor;
+      if (v_InstanceId < 8)
+        faceColor = colors[v_InstanceId];
+      else
+        faceColor = vec3(1.0,0.5,0.0);
+
       vec3 wireColor = vec3(0, 0, 0);
       fragcolor = vec4(mix(wireColor, faceColor, edgeFactor()),1);
     }
@@ -111,7 +112,7 @@ $ ->
 
   setSize = ->
     gl.viewport(0, 0, canvas.width, canvas.height)
-    proj = Matrix.perspective(90, canvas.width / canvas.height, z-RADIUS, z+RADIUS)
+    proj = Matrix.perspective(45, canvas.width / canvas.height, z-RADIUS-1, z+RADIUS+500)
     program.setUniformMatrix('u_ProjMatrix', proj.array())
 
   setSize()
@@ -126,12 +127,33 @@ $ ->
   v2 = new Vector([1, 0, 0])
   octahedron = new Model(gl,program,new Face(v0,v1,v2).tessellate(3))
 
-  subPatch = new Model(gl,program,new Face(v0,v1,v2).tessellate(3))
-  d = octahedron.faces[19].v[0].minus(v0)
+  discards = [ 0,0,  1,1,  2,2,  3,3,  4,4,  5,5,  6,6,  7,7, 
+               0,8,  1,9, 2,10, 3,11, 4,12, 5,13, 6,14, 7,15,
+              0,16, 1,17, 2,18, 3,19, 4,20, 5,21, 6,22, 7,23,
+              0,24, 1,25, 2,26, 3,27, 4,28, 5,29, 6,30, 7,31,
+              0,32, 1,33, 2,34, 3,35, 4,36, 5,37, 6,38, 7,39,
+              0,40, 1,41, 2,42, 3,43, 4,44, 5,45, 6,46, 7,47,
+              0,48, 1,49, 2,50, 3,51, 4,52, 5,53, 6,54, 7,55,
+              0,56, 1,57, 2,58, 3,59, 4,60, 5,61, 6,62, 7,63]
+  patchMatrices = []
 
-  patchMatrix = Matrix.scalation(1/8,1/8,1/8)
-    .translate(d.a[0]+v0.a[0]*(7/8),d.a[1]+v0.a[1]*(7/8),d.a[2]+v0.a[2]*(7/8))
-  program.setUniformVectorArray('u_discardPile',[0,19],2)
+  tessellate = ->
+    patchMatrices = []
+    for idx in [0..discards.length-1] by 2
+      discardOctant = discards[idx]
+      discardFace = discards[idx+1]
+      axis = octahedron.faces[discardFace].getNormal(Matrix.identity())
+      d = octahedron.faces[discardFace].centroid.minus(octahedron.faces[0].centroid)
+      centerFlip = octahedron.faces[discardFace].isUpsidedown * 180
+      lowerFlip = 0
+      patchMatrix = Matrix.scalation(1/8,1/8,1/8)
+        .rotate(centerFlip + lowerFlip,axis.a[0],axis.a[1],axis.a[2])
+        .translate(d.a[0],d.a[1],d.a[2])
+        .translate(v0.a[0]*(7/8),v0.a[1]*(7/8),v0.a[2]*(7/8))
+      patchMatrices = patchMatrices.concat(patchMatrix.m)
+    program.setUniformVectorArray('u_discardPile',discards,2)
+    program.setUniform('u_discardCount',discards.length / 2)
+    program.setUniformMatrix('u_PatchMatrix',patchMatrices)
 
   diffX = 0
   diffY = 0
@@ -140,7 +162,7 @@ $ ->
   y = 0
   rX = 0
   rY = 0
-  z = RADIUS * 2
+  z = RADIUS * 4
 
   $(document.body).append('<div id="overlay"></div>')
   $('#overlay').css({ position:'fixed', color:'white', left:10 + 'px', top:10 + 'px' })
@@ -153,19 +175,14 @@ $ ->
     program.setUniformMatrix('u_ModelMatrix', model.array())
     view = Matrix.lookAt([0, 0, z],[0,0,0],[0,1,0])
     program.setUniformMatrix('u_ViewMatrix', view.array())
-    proj = Matrix.perspective(90, canvas.width / canvas.height, z-RADIUS, z+RADIUS)
+    proj = Matrix.perspective(45, canvas.width / canvas.height, z-RADIUS-1, z+RADIUS+500)
     program.setUniformMatrix('u_ProjMatrix', proj.array())
     pvm = proj.multiply(view).multiply(model)
   
   octahedron.draw = -> 
     octahedron.activate()
-    program.setUniform('subpatch',-1)
-    gl.drawArraysInstanced(gl.TRIANGLES, 0, octahedron.vertexCount(), 8)
-    
-    subPatch.activate()
-    program.setUniform('subpatch',0)
-    program.setUniformMatrix('u_PatchMatrix',patchMatrix.array())
-    gl.drawArraysInstanced(gl.TRIANGLES, 0, subPatch.vertexCount(), 1)
+    tessellate()
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, octahedron.vertexCount(), 8 + (discards.length / 2))
 
   engine = new Engine(gl)
   engine.addModel(octahedron)
@@ -188,7 +205,7 @@ $ ->
   $('#gl').mousewheel (e) ->
     toSurface = z-RADIUS
     z = Math.max(RADIUS+2,z + toSurface * e.deltaY * 0.01)
-    $('#overlay').text("z: #{z.toFixed(2)}, deltaY: #{e.deltaY}, to surface: #{(z-RADIUS).toFixed(2)}")
+    #$('#overlay').text("z: #{z.toFixed(2)}, deltaY: #{e.deltaY}, to surface: #{(z-RADIUS).toFixed(2)}")
     
 setCanvasSize = ->
   canvas = document.getElementById('gl')

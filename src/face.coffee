@@ -5,6 +5,7 @@ class @Face
     @centroid = this.getCentroid()
     @children = []
     @level = if lvl? then lvl else 0
+    @isUpsidedown = 0
     @divideDistance = v0.distance(v1) * 5
     @string = "#{@v[0]}\n#{@v[1]}\n#{@v[2]}"
 
@@ -62,12 +63,20 @@ class @Face
 
     f0 = new Face(@v[0], m0, m2, @level+1)
     f0.setBarys([ @b[0], b0, b2])
+    f0.isUpsidedown = @isUpsidedown
+
     f1 = new Face(m0,@v[1], m1, @level+1)
     f1.setBarys([ b0, @b[1], b1])
+    f1.isUpsidedown = @isUpsidedown
+
     f2 = new Face(m0,m1,m2, @level+1)
     f2.setBarys([b0,b1,b2])
+    f2.isUpsidedown = if @isUpsidedown == 1 then 0 else 1
+
     f3 = new Face(m2,m1,@v[2], @level+1)
     f3.setBarys([b2,b1,@b[2]])
+    f3.isUpsidedown = @isUpsidedown
+
     @children = [f0,f1,f2,f3]
 
     [].concat(f0.tessellate(subdivisions-1,midpointFunction))
