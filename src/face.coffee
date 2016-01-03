@@ -8,33 +8,7 @@ class @Face
     @isUpsidedown = 0
     @divideDistance = v0.distance(v1) * 5
     @string = "#{@v[0]}\n#{@v[1]}\n#{@v[2]}"
-
-  detail: (pvm,camera,results,lvl) ->
-    if not results? then results = { remove: [], add: []}
-    if not lvl? then lvl = 1
-
-    if lvl is 1 and this.isBackFacing(camera,pvm)
-      if @children.length is 4
-        results.add.push(this)
-        for child in @children
-          results.remove = results.remove.concat(child.getLeafFaces())
-        @children = []
-    else 
-      tranformedCentroid = pvm.multiply(@centroid)
-      d = camera.distance(tranformedCentroid)
-      if d < @divideDistance
-        if @children.length is 0
-          results.remove.push(this)
-          results.add = results.add.concat(this.tessellate(1,Vector.lerp))
-        else
-          for child in @children
-            child.detail(pvm,camera,results,lvl+1)
-      else
-        if @children.length is 4
-          results.add.push(this)
-          for child in @children
-            results.remove = results.remove.concat(child.getLeafFaces())
-          @children = []
+    @id = -1
 
   getLeafFaces: () ->
     leaves = []
@@ -45,14 +19,67 @@ class @Face
       leaves.push(this)
     leaves
 
+  getPossiblePatches: (camera,patch,model,radius,parentInstance,metrics) ->
+    if not metrics? then metrics = {patch: 0, norm: 0, scale: 0, trans: 0, dist: 0, concat: 0}
+    possiblePatches = []
+    stats = this.getAABBDistanceAndSize(camera, model, patch, radius, metrics)
+    score = stats.distance / stats.size
+    if score < 6
+      if @children.length == 4
+        for child in @children
+          results = child.getPossiblePatches(camera,patch,model,radius,parentInstance, metrics)
+          t1 = new Date().getTime()
+          possiblePatches = possiblePatches.concat(results)
+          t2 = new Date().getTime()
+          metrics.concat += (t2 - t1)
+        possiblePatches
+      else
+        [{parentInstance: parentInstance, id: @id, score: score}]
+    else
+      []
+
+  getAABBDistanceAndSize: (camera, model, patch, radius, metrics) ->
+    aabb = this.getAABB(model, patch, radius, metrics)
+    dx = Math.max(aabb.min.a[0] - camera.a[0], 0, camera.a[0] - aabb.max.a[0]);
+    dy = Math.max(aabb.min.a[1] - camera.a[1], 0, camera.a[1] - aabb.max.a[1]);
+    dz = Math.max(aabb.min.a[2] - camera.a[2], 0, camera.a[2] - aabb.max.a[2]);
+    t1 = new Date().getTime()
+    r = {distance: Math.sqrt(dx*dx + dy*dy + dz*dz), size: aabb.max.a[0] - aabb.min.a[0]}
+    t2 = new Date().getTime()
+    metrics.dist += (t2 - t1)
+    r
+
+  getAABB: (model, patch, radius, metrics) ->
+    max = new Vector([-Infinity,-Infinity,-Infinity])
+    min = new Vector([Infinity,Infinity,Infinity])
+    for vector in @v
+      t1 = new Date().getTime()
+      patchedVector = patch.multiply(vector)
+      t2 = new Date().getTime()
+      patchedVector = patchedVector.normalize()
+      t3 = new Date().getTime()
+      patchedVector = patchedVector.scale(radius)
+      t4 = new Date().getTime()
+      transformedVector = model.multiply(patchedVector)
+      t5 = new Date().getTime()
+      metrics.patch += (t2-t1)
+      metrics.norm += (t3-t2)
+      metrics.scale += (t4-t3)
+      metrics.trans += (t5-t4)
+      for i in [0..2]
+        if transformedVector.a[i] < min.a[i] then min.a[i] = transformedVector.a[i]
+        if transformedVector.a[i] > max.a[i] then max.a[i] = transformedVector.a[i]
+    { min: min, max: max }
+
   getCentroid: () ->
     return new Vector([(@v[0].a[0] + @v[1].a[0] + @v[2].a[0])/3,
                       (@v[0].a[1] + @v[1].a[1] + @v[2].a[1])/3,
                       (@v[0].a[2] + @v[1].a[2] + @v[2].a[2])/3])
 
-  tessellate: (subdivisions,midpointFunction) ->
+  tessellate: (subdivisions,midpointFunction,lvl) ->
     if subdivisions is 0 then return [this]
     if not midpointFunction? then midpointFunction = Vector.lerp
+    if not lvl? then lvl = 0
 
     m0 = midpointFunction(@v[0], @v[1], 0.5)
     b0 = Vector.nor @b[0], @b[1]
@@ -79,10 +106,17 @@ class @Face
 
     @children = [f0,f1,f2,f3]
 
-    [].concat(f0.tessellate(subdivisions-1,midpointFunction))
-    .concat(f1.tessellate(subdivisions-1,midpointFunction))
-    .concat(f2.tessellate(subdivisions-1,midpointFunction))
-    .concat(f3.tessellate(subdivisions-1,midpointFunction))
+    results = [].concat(f0.tessellate(subdivisions-1,midpointFunction,lvl+1))
+    .concat(f1.tessellate(subdivisions-1,midpointFunction,lvl+1))
+    .concat(f2.tessellate(subdivisions-1,midpointFunction,lvl+1))
+    .concat(f3.tessellate(subdivisions-1,midpointFunction,lvl+1))
+
+    if lvl is 0
+      for result,i in results
+        result.id = i
+
+    results
+
 
   getNormal: (pvm) ->
     v1 = pvm.multiply(@v[1]).minus(pvm.multiply(@v[0]))

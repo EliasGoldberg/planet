@@ -20,8 +20,8 @@ $ ->
     uniform mediump mat4 u_ModelMatrix;
     uniform mediump mat4 u_ViewMatrix;
     uniform mediump mat4 u_ProjMatrix;
-    uniform mediump mat4 u_PatchMatrix[100];
-    uniform mediump vec2 u_discardPile[100];
+    uniform mediump mat4 u_PatchMatrix[128];
+    uniform mediump vec2 u_discardPile[128];
     uniform mediump float u_discardCount;
 
     void main() {
@@ -47,7 +47,7 @@ $ ->
     flat in int v_Triangle;
     flat in int v_InstanceId;
     out vec4 fragcolor;
-    uniform mediump vec2 u_discardPile[100];
+    uniform mediump vec2 u_discardPile[128];
     uniform mediump float u_discardCount;
 
     vec3 colors[8] = vec3[](
@@ -108,9 +108,10 @@ $ ->
   v0 = new Vector([0, 1, 0])
   v1 = new Vector([0, 0, 1])
   v2 = new Vector([1, 0, 0])
-  octahedron = new Model(gl,program,new Face(v0,v1,v2).tessellate(3))
+  rawFace = new Face(v0,v1,v2)
+  octahedron = new Model(gl,program,rawFace.tessellate(3))
   
-  
+  ###
   discards = [ 0,0,  1,1,  2,2,  3,3,  4,4,  5,5,  6,6,  7,7, 
                0,8,  1,9, 2,10, 3,11, 4,12, 5,13, 6,14, 7,15,
               0,16, 1,17, 2,18, 3,19, 4,20, 5,21, 6,22, 7,23,
@@ -119,7 +120,9 @@ $ ->
               0,40, 1,41, 2,42, 3,43, 4,44, 5,45, 6,46, 7,47,
               0,48, 1,49, 2,50, 3,51, 4,52, 5,53, 6,54, 7,55,
               0,56, 1,57, 2,58, 3,59, 4,60, 5,61, 6,62, 7,63, 8,0, 8+64,0]
-  
+  ###
+  discards = []
+  patchArray = []
   patchMatrices = []
   octantTransforms = [
     Matrix.identity(), Matrix.rotation(90,0,1,0), 
@@ -132,7 +135,8 @@ $ ->
     octantArrays = octantArrays.concat(transformation.m) 
 
   tessellate = ->
-    patchMatrices = [].concat(octantArrays)
+    patchArray = [].concat(octantArrays)
+    patchMatrices = [].concat(octantTransforms)
 
     for idx in [0..discards.length-1] by 2
       discardOctant = discards[idx]
@@ -150,7 +154,7 @@ $ ->
           .translate(d.a[0],d.a[1],d.a[2])
           .translate(v0.a[0]*(7/8),v0.a[1]*(7/8),v0.a[2]*(7/8))
         )
-        if (discardOctant >= 8)
+        if discardOctant >= 8
           discardOctant = discards[(discardOctant-8)*2]
         else
           nested = false
@@ -158,11 +162,12 @@ $ ->
       patchMatrix = octantTransforms[discardOctant]
         .multiply(patchMatrix)
         .multiply(Matrix.rotation(centerFlip,axis.a[0],axis.a[1],axis.a[2]))
-      patchMatrices = patchMatrices.concat(patchMatrix.m)
+      patchArray = patchArray.concat(patchMatrix.m)
+      patchMatrices.push(patchMatrix)
 
     program.setUniformVectorArray('u_discardPile',discards,2)
     program.setUniform('u_discardCount',discards.length / 2)
-    program.setUniformMatrix('u_PatchMatrix',patchMatrices)
+    program.setUniformMatrix('u_PatchMatrix',patchArray)
 
   diffX = 0
   diffY = 0
@@ -174,8 +179,13 @@ $ ->
   z = RADIUS * 4
 
   $(document.body).append('<div id="overlay"></div>')
-  $('#overlay').css({ position:'fixed', color:'white', left:10 + 'px', top:10 + 'px' })
+  $('#overlay').css({ position:'fixed', backgroundColor:'black', color:'white', left:10 + 'px', top:10 + 'px' })
 
+  $(document.body).append('<div id="lower-left"></div>')
+  $('#lower-left').css({ position:'fixed', backgroundColor:'black', color:'white', left:10 + 'px', bottom:10 + 'px' })
+
+  frame = 0
+  metrics = {patch: 0, norm: 0, scale: 0, trans: 0, dist: 0, concat: 0}
   octahedron.animate = (elapsed) ->
     rX += if dragging? and dragging then diffX else 0
     rY += if dragging? and dragging then diffY else 0
@@ -186,11 +196,32 @@ $ ->
     program.setUniformMatrix('u_ViewMatrix', view.array())
     proj = Matrix.perspective(45, canvas.width / canvas.height, z-RADIUS-1, z+RADIUS+500)
     program.setUniformMatrix('u_ProjMatrix', proj.array())
-    pvm = proj.multiply(view).multiply(model)
+
+    tessellate()
+    possiblePatches = []
+    #t1 = new Date().getTime()
+
+    for matrix,i in patchMatrices
+      possiblePatches = possiblePatches.concat(rawFace.getPossiblePatches(new Vector([0,0,z]),matrix,model,RADIUS,i,metrics))
+    #t2 = new Date().getTime()
+    possiblePatches.sort((a,b) -> a.score - b.score)
+    discards = []
+    #t3 = new Date().getTime()
+    for possiblePatch,i in possiblePatches[0..127]
+      discards.push(possiblePatch.parentInstance)
+      discards.push(possiblePatch.id)
+    #t4 = new Date().getTime()
+    tessellate()
+    #t5 = new Date().getTime()
+    frame += 1
+    if (frame % 60 is 0)
+      $('#lower-left').text("#{possiblePatches.length} #{(metrics.patch/60).toFixed(0)}, #{(metrics.norm/60).toFixed(0)}, #{(metrics.scale/60).toFixed(0)}, #{(metrics.trans/60).toFixed(0)}, #{(metrics.dist/60).toFixed(0)}, #{(metrics.concat/60).toFixed(0)},")
+      metrics = {patch: 0, norm: 0, scale: 0, trans: 0, dist: 0, concat: 0}
+
+
   
   octahedron.draw = -> 
     octahedron.activate()
-    tessellate()
     gl.drawArraysInstanced(gl.TRIANGLES, 0, octahedron.vertexCount(), 8 + (discards.length / 2))
 
   engine = new Engine(gl)
