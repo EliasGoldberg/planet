@@ -1,5 +1,6 @@
 class @Face
   constructor: (v0,v1,v2,lvl) ->
+    RADIUS = 6370000
     @v = [v0,v1,v2]
     @b = [[1,0,0],[0,1,0],[0,0,1]]
     @centroid = this.getCentroid()
@@ -9,6 +10,8 @@ class @Face
     @divideDistance = v0.distance(v1) * 5
     @string = "#{@v[0]}\n#{@v[1]}\n#{@v[2]}"
     @id = -1
+    @normedVectors = [v0.normalize().scale(RADIUS), v1.normalize().scale(RADIUS), v2.normalize().scale(RADIUS)]
+    @patchedVectors = []
 
   getLeafFaces: () ->
     leaves = []
@@ -20,9 +23,8 @@ class @Face
     leaves
 
   getPossiblePatches: (camera,patch,model,radius,parentInstance,metrics) ->
-    if not metrics? then metrics = {patch: 0, norm: 0, scale: 0, trans: 0, dist: 0, concat: 0}
     possiblePatches = []
-    stats = this.getAABBDistanceAndSize(camera, model, patch, radius, metrics)
+    stats = this.getAABBDistanceAndSize(camera, model, patch, radius, parentInstance, metrics)
     score = stats.distance / stats.size
     if score < 6
       if @children.length == 4
@@ -38,8 +40,8 @@ class @Face
     else
       []
 
-  getAABBDistanceAndSize: (camera, model, patch, radius, metrics) ->
-    aabb = this.getAABB(model, patch, radius, metrics)
+  getAABBDistanceAndSize: (camera, model, patch, radius, parentInstance, metrics) ->
+    aabb = this.getAABB(model, patch, radius, parentInstance, metrics)
     dx = Math.max(aabb.min.a[0] - camera.a[0], 0, camera.a[0] - aabb.max.a[0]);
     dy = Math.max(aabb.min.a[1] - camera.a[1], 0, camera.a[1] - aabb.max.a[1]);
     dz = Math.max(aabb.min.a[2] - camera.a[2], 0, camera.a[2] - aabb.max.a[2]);
@@ -49,23 +51,19 @@ class @Face
     metrics.dist += (t2 - t1)
     r
 
-  getAABB: (model, patch, radius, metrics) ->
+  getAABB: (model, patch, radius, parentInstance, metrics) ->
     max = new Vector([-Infinity,-Infinity,-Infinity])
     min = new Vector([Infinity,Infinity,Infinity])
-    for vector in @v
-      t1 = new Date().getTime()
-      patchedVector = patch.multiply(vector)
+    for vector,i in @normedVectors
       t2 = new Date().getTime()
-      patchedVector = patchedVector.normalize()
+      if not @patchedVectors[parentInstance]? then @patchedVectors[parentInstance] = []
+      if not @patchedVectors[parentInstance][i]? then @patchedVectors[parentInstance][i] = patch.multiply(vector)
+      patchedVector = @patchedVectors[parentInstance][i]
       t3 = new Date().getTime()
-      patchedVector = patchedVector.scale(radius)
-      t4 = new Date().getTime()
       transformedVector = model.multiply(patchedVector)
       t5 = new Date().getTime()
-      metrics.patch += (t2-t1)
-      metrics.norm += (t3-t2)
-      metrics.scale += (t4-t3)
-      metrics.trans += (t5-t4)
+      metrics.patch += (t3-t2)
+      metrics.trans += (t5-t3)
       for i in [0..2]
         if transformedVector.a[i] < min.a[i] then min.a[i] = transformedVector.a[i]
         if transformedVector.a[i] > max.a[i] then max.a[i] = transformedVector.a[i]

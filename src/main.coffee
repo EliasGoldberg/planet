@@ -199,24 +199,19 @@ $ ->
 
     tessellate()
     possiblePatches = []
-    #t1 = new Date().getTime()
 
     for matrix,i in patchMatrices
       possiblePatches = possiblePatches.concat(rawFace.getPossiblePatches(new Vector([0,0,z]),matrix,model,RADIUS,i,metrics))
-    #t2 = new Date().getTime()
     possiblePatches.sort((a,b) -> a.score - b.score)
     discards = []
-    #t3 = new Date().getTime()
     for possiblePatch,i in possiblePatches[0..127]
       discards.push(possiblePatch.parentInstance)
       discards.push(possiblePatch.id)
-    #t4 = new Date().getTime()
     tessellate()
-    #t5 = new Date().getTime()
     frame += 1
     if (frame % 60 is 0)
-      $('#lower-left').text("#{possiblePatches.length} #{(metrics.patch/60).toFixed(0)}, #{(metrics.norm/60).toFixed(0)}, #{(metrics.scale/60).toFixed(0)}, #{(metrics.trans/60).toFixed(0)}, #{(metrics.dist/60).toFixed(0)}, #{(metrics.concat/60).toFixed(0)},")
-      metrics = {patch: 0, norm: 0, scale: 0, trans: 0, dist: 0, concat: 0}
+      $('#lower-left').text("#{possiblePatches.length} #{(metrics.trans/60).toFixed(0)}")
+      metrics = {trans: 0}
 
 
   
