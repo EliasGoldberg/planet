@@ -72,9 +72,9 @@ $ ->
       }
       
       vec3 faceColor;
-      if (v_InstanceId < 8)
-        faceColor = colors[v_InstanceId];
-      else
+      //if (v_InstanceId < 8)
+      //  faceColor = colors[v_InstanceId];
+      //else
         faceColor = vec3(1.0,0.5,0.0);
 
       vec3 wireColor = vec3(0, 0, 0);
@@ -108,8 +108,10 @@ $ ->
   v0 = new Vector([0, 1, 0])
   v1 = new Vector([0, 0, 1])
   v2 = new Vector([1, 0, 0])
+  tess = 4
+  scaler = 1/Math.pow(2,tess)
   rawFace = new Face(v0,v1,v2)
-  octahedron = new Model(gl,program,rawFace.tessellate(3))
+  octahedron = new Model(gl,program,rawFace.tessellate(tess))
   
   ###
   discards = [ 0,0,  1,1,  2,2,  3,3,  4,4,  5,5,  6,6,  7,7, 
@@ -143,16 +145,16 @@ $ ->
       discardFace = discards[idx+1]
       
       centerFlip = octahedron.faces[discardFace].isUpsidedown * 180
-      axis = octahedron.faces[discardFace].getNormal(Matrix.identity())
+      axis = octahedron.faces[discardFace].getNormal()
 
       patchMatrix = Matrix.identity() 
       nested = true
       while nested
         d = octahedron.faces[discardFace].centroid.minus(octahedron.faces[0].centroid)
         patchMatrix = patchMatrix.multiply(
-          Matrix.scalation(1/8,1/8,1/8)
+          Matrix.scalation(scaler,scaler,scaler)
           .translate(d.a[0],d.a[1],d.a[2])
-          .translate(v0.a[0]*(7/8),v0.a[1]*(7/8),v0.a[2]*(7/8))
+          .translate(v0.a[0]*(1-scaler),v0.a[1]*(1-scaler),v0.a[2]*(1-scaler))
         )
         if discardOctant >= 8
           discardOctant = discards[(discardOctant-8)*2]
@@ -185,7 +187,7 @@ $ ->
   $('#lower-left').css({ position:'fixed', backgroundColor:'black', color:'white', left:10 + 'px', bottom:10 + 'px' })
 
   frame = 0
-  metrics = {patch: 0, norm: 0, scale: 0, trans: 0, dist: 0, concat: 0}
+  metrics = {trans: 0, normalAngle: 0}
   octahedron.animate = (elapsed) ->
     rX += if dragging? and dragging then diffX else 0
     rY += if dragging? and dragging then diffY else 0
@@ -201,7 +203,7 @@ $ ->
     possiblePatches = []
 
     for matrix,i in patchMatrices
-      possiblePatches = possiblePatches.concat(rawFace.getPossiblePatches(new Vector([0,0,z]),matrix,model,RADIUS,i,metrics))
+      possiblePatches = possiblePatches.concat(rawFace.getPossiblePatches(new Vector([0,0,z]),matrix,model,i,metrics))
     possiblePatches.sort((a,b) -> a.score - b.score)
     discards = []
     for possiblePatch,i in possiblePatches[0..127]
@@ -210,8 +212,8 @@ $ ->
     tessellate()
     frame += 1
     if (frame % 60 is 0)
-      $('#lower-left').text("#{possiblePatches.length} #{(metrics.trans/60).toFixed(0)}")
-      metrics = {trans: 0}
+      $('#lower-left').text("#{possiblePatches.length} #{(metrics.trans/60).toFixed(0)} #{(metrics.normalAngle/60).toFixed(0)}")
+      metrics = {trans: 0, normalAngle: 0}
 
 
   

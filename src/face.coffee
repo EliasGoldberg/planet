@@ -22,52 +22,61 @@ class @Face
       leaves.push(this)
     leaves
 
-  getPossiblePatches: (camera,patch,model,radius,parentInstance,metrics) ->
+  getPossiblePatches: (camera,patch,model,parentInstance,metrics) ->
     possiblePatches = []
-    stats = this.getAABBDistanceAndSize(camera, model, patch, radius, parentInstance, metrics)
+    this.buildPatchVectors(parentInstance,patch)
+    transformedVectors = this.buildTranformVectors(parentInstance,model,metrics)
+    
+    if @level is 0
+      t1 = new Date().getTime()
+      dot = this.normalAngle(camera,transformedVectors)
+      t2 = new Date().getTime()
+      metrics.normalAngle += (t2-t1)
+      if dot > 0 then return []
+
+    stats = this.getAABBDistanceAndSize(camera, transformedVectors, metrics)
     score = stats.distance / stats.size
     if score < 6
       if @children.length == 4
         for child in @children
-          results = child.getPossiblePatches(camera,patch,model,radius,parentInstance, metrics)
-          t1 = new Date().getTime()
+          results = child.getPossiblePatches(camera,patch,model,parentInstance, metrics)
           possiblePatches = possiblePatches.concat(results)
-          t2 = new Date().getTime()
-          metrics.concat += (t2 - t1)
         possiblePatches
       else
         [{parentInstance: parentInstance, id: @id, score: score}]
     else
       []
 
-  getAABBDistanceAndSize: (camera, model, patch, radius, parentInstance, metrics) ->
-    aabb = this.getAABB(model, patch, radius, parentInstance, metrics)
+  getAABBDistanceAndSize: (camera, transformedVectors, metrics) ->
+    aabb = this.getAABB(transformedVectors, metrics)
     dx = Math.max(aabb.min.a[0] - camera.a[0], 0, camera.a[0] - aabb.max.a[0]);
     dy = Math.max(aabb.min.a[1] - camera.a[1], 0, camera.a[1] - aabb.max.a[1]);
     dz = Math.max(aabb.min.a[2] - camera.a[2], 0, camera.a[2] - aabb.max.a[2]);
-    t1 = new Date().getTime()
-    r = {distance: Math.sqrt(dx*dx + dy*dy + dz*dz), size: aabb.max.a[0] - aabb.min.a[0]}
-    t2 = new Date().getTime()
-    metrics.dist += (t2 - t1)
-    r
+    {distance: Math.sqrt(dx*dx + dy*dy + dz*dz), size: aabb.max.a[0] - aabb.min.a[0]}
 
-  getAABB: (model, patch, radius, parentInstance, metrics) ->
+  getAABB: (transformedVectors, metrics) ->
     max = new Vector([-Infinity,-Infinity,-Infinity])
     min = new Vector([Infinity,Infinity,Infinity])
-    for vector,i in @normedVectors
-      t2 = new Date().getTime()
-      if not @patchedVectors[parentInstance]? then @patchedVectors[parentInstance] = []
-      if not @patchedVectors[parentInstance][i]? then @patchedVectors[parentInstance][i] = patch.multiply(vector)
-      patchedVector = @patchedVectors[parentInstance][i]
-      t3 = new Date().getTime()
-      transformedVector = model.multiply(patchedVector)
-      t5 = new Date().getTime()
-      metrics.patch += (t3-t2)
-      metrics.trans += (t5-t3)
+    for transformedVector,i in transformedVectors
       for i in [0..2]
         if transformedVector.a[i] < min.a[i] then min.a[i] = transformedVector.a[i]
         if transformedVector.a[i] > max.a[i] then max.a[i] = transformedVector.a[i]
     { min: min, max: max }
+
+  buildPatchVectors: (parentInstance,patch) ->
+    if not @patchedVectors[parentInstance]?
+      @patchedVectors[parentInstance] = []
+      for vector,i in @normedVectors
+        @patchedVectors[parentInstance][i] = patch.multiply(vector)
+
+  buildTranformVectors: (parentInstance,model,metrics) ->
+    transformedVectors = []
+    for patchedVector in @patchedVectors[parentInstance]
+      t1 = new Date().getTime()
+      transformedVectors.push(model.multiply(patchedVector))
+      t2 = new Date().getTime()
+      metrics.trans += (t2-t1)
+    transformedVectors
 
   getCentroid: () ->
     return new Vector([(@v[0].a[0] + @v[1].a[0] + @v[2].a[0])/3,
@@ -112,20 +121,18 @@ class @Face
     if lvl is 0
       for result,i in results
         result.id = i
-
     results
 
-
-  getNormal: (pvm) ->
-    v1 = pvm.multiply(@v[1]).minus(pvm.multiply(@v[0]))
-    v2 = pvm.multiply(@v[2]).minus(pvm.multiply(@v[0]))
+  getNormal: (transformedVectors) ->
+    if !transformedVectors? then transformedVectors = @v
+    v1 = transformedVectors[1].minus(transformedVectors[0])
+    v2 = transformedVectors[2].minus(transformedVectors[0])
     v1.crossProduct(v2).normalize()
   
-  isBackFacing: (camera,pvm) ->
-    normal = this.getNormal(pvm)
+  normalAngle: (camera,transformedVectors) ->
+    normal = this.getNormal(transformedVectors)
     cVec = new Vector([0,0,0]).minus(camera).normalize()
-    dot = normal.dotProduct(cVec)
-    dot > 0
+    normal.dotProduct(cVec)
 
   setBary: (bary,i) -> @b[i] = bary
   setBarys: (barys) -> @b = barys
