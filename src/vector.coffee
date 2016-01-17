@@ -3,9 +3,11 @@ class @Vector
   array: -> new Float32Array(@a)
   elements: -> @a
 
+  length: ->
+    Math.sqrt(@a[0]*@a[0] + @a[1]*@a[1] + @a[2]*@a[2])
 
   normalize: ->
-    rlf = 1 / Math.sqrt(@a[0]*@a[0] + @a[1]*@a[1] + @a[2]*@a[2])
+    rlf = 1 / this.length()
     new Vector([@a[0]*rlf, @a[1]*rlf, @a[2]*rlf])
 
   crossProduct: (v) ->

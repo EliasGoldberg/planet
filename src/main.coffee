@@ -93,10 +93,7 @@ $ ->
 
   program.activate()
 
-  setSize = ->
-    gl.viewport(0, 0, canvas.width, canvas.height)
-    proj = Matrix.perspective(45, canvas.width / canvas.height, z-RADIUS-1, z+RADIUS+500)
-    program.setUniformMatrix('u_ProjMatrix', proj.array())
+  setSize = -> gl.viewport(0, 0, canvas.width, canvas.height)
 
   setSize()
 
@@ -136,9 +133,18 @@ $ ->
   for transformation in octantTransforms
     octantArrays = octantArrays.concat(transformation.m) 
 
-  tessellate = ->
+  tessellate = (model,proj) ->
     patchArray = [].concat(octantArrays)
     patchMatrices = [].concat(octantTransforms)
+    possiblePatches = []
+    
+    for matrix,i in patchMatrices
+      possiblePatches = possiblePatches.concat(rawFace.getPossiblePatches(new Vector([0,0,z]),matrix,model,proj,i,metrics))
+    possiblePatches.sort((a,b) -> a.score - b.score)
+    discards = []
+    for possiblePatch,i in possiblePatches[0..127]
+      discards.push(possiblePatch.parentInstance)
+      discards.push(possiblePatch.id)
 
     for idx in [0..discards.length-1] by 2
       discardOctant = discards[idx]
@@ -197,22 +203,18 @@ $ ->
     view = Matrix.lookAt([0, 0, z],[0,0,0],[0,1,0])
     program.setUniformMatrix('u_ViewMatrix', view.array())
     proj = Matrix.perspective(45, canvas.width / canvas.height, z-RADIUS-1, z+RADIUS+500)
+    #proj = Matrix.perspective(45, canvas.width / canvas.height, 1, 500)
     program.setUniformMatrix('u_ProjMatrix', proj.array())
 
-    tessellate()
-    possiblePatches = []
+    tessellate(model,proj)
 
-    for matrix,i in patchMatrices
-      possiblePatches = possiblePatches.concat(rawFace.getPossiblePatches(new Vector([0,0,z]),matrix,model,i,metrics))
-    possiblePatches.sort((a,b) -> a.score - b.score)
-    discards = []
-    for possiblePatch,i in possiblePatches[0..127]
-      discards.push(possiblePatch.parentInstance)
-      discards.push(possiblePatch.id)
-    tessellate()
     frame += 1
     if (frame % 60 is 0)
-      $('#lower-left').text("#{possiblePatches.length} #{(metrics.trans/60).toFixed(0)} #{(metrics.normalAngle/60).toFixed(0)}")
+      $('#lower-left').text(
+        """
+           #{discards.length}
+           z: #{z.toFixed(2)} near: #{(z-RADIUS-1).toFixed(2)} far: #{(z+RADIUS+500).toFixed(2)}
+        """)
       metrics = {trans: 0, normalAngle: 0}
 
 

@@ -87,13 +87,25 @@ class @Matrix
       r[i+12] = @m[i] * b.m[12] + @m[i+4] * b.m[13] + @m[i+8] * b.m[14] + @m[i+12] * b.m[15]
     new Matrix(r)
 
-  multiplyVector: (b) ->
-    r = [0,0,0,1]
-    r[0] = b.a[0] * @m[0] + b.a[1] * @m[4] + b.a[2] * @m[ 8] +  @m[12]
-    r[1] = b.a[0] * @m[1] + b.a[1] * @m[5] + b.a[2] * @m[ 9] +  @m[13]
-    r[2] = b.a[0] * @m[2] + b.a[1] * @m[6] + b.a[2] * @m[10] +  @m[14]
-    r[3] = b.a[0] * @m[3] + b.a[1] * @m[7] + b.a[2] * @m[11] +  @m[15]
+  multiplyVector: (b,w) ->
+    r = this.multiplyVector4(b,w)
     new Vector([r[0] / r[3], r[1] / r[3], r[2] / r[3]])
+
+  multiplyVector4: (b,w) ->
+    r = [0,0,0,1]
+    if !w? then w = 1
+    r[0] = b.a[0] * @m[0] + b.a[1] * @m[4] + b.a[2] * @m[ 8] +  w * @m[12]
+    r[1] = b.a[0] * @m[1] + b.a[1] * @m[5] + b.a[2] * @m[ 9] +  w * @m[13]
+    r[2] = b.a[0] * @m[2] + b.a[1] * @m[6] + b.a[2] * @m[10] +  w * @m[14]
+    r[3] = b.a[0] * @m[3] + b.a[1] * @m[7] + b.a[2] * @m[11] +  w * @m[15]
+    r
+
+  isPointInFrustum: (inV) ->
+    v2 = this.multiplyVector4(inV)
+    insideX = -v2[3] < v2[0] and v2[0] < v2[3]
+    insideY = -v2[3] < v2[1] and v2[1] < v2[3]
+    insideZ = -v2[3] < v2[2] and v2[2] < v2[3]
+    return insideX and insideY and insideZ
 
   toString: ->
     "#{@m[0]}, #{@m[1]}, #{@m[2]}, #{@m[3]}\n#{@m[4]}, #{@m[5]}, #{@m[6]}, #{@m[7]}\n#{@m[8]}, #{@m[9]}, #{@m[10]}, #{@m[11]}\n#{@m[12]}, #{@m[13]}, #{@m[14]}, #{@m[15]}"

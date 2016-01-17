@@ -22,7 +22,7 @@ class @Face
       leaves.push(this)
     leaves
 
-  getPossiblePatches: (camera,patch,model,parentInstance,metrics) ->
+  getPossiblePatches: (camera,patch,model,proj,parentInstance,metrics) ->
     possiblePatches = []
     this.buildPatchVectors(parentInstance,patch)
     transformedVectors = this.buildTranformVectors(parentInstance,model,metrics)
@@ -34,12 +34,16 @@ class @Face
       metrics.normalAngle += (t2-t1)
       if dot > 0 then return []
 
-    stats = this.getAABBDistanceAndSize(camera, transformedVectors, metrics)
+    aabb = this.getAABB(transformedVectors,metrics)
+    if !this.isAABBInsideFrustum(aabb,camera,proj) then return []
+
+    stats = this.getAABBDistanceAndSize(camera, aabb)
     score = stats.distance / stats.size
+    #console.log(score)
     if score < 6
       if @children.length == 4
         for child in @children
-          results = child.getPossiblePatches(camera,patch,model,parentInstance, metrics)
+          results = child.getPossiblePatches(camera,patch,model,proj,parentInstance, metrics)
           possiblePatches = possiblePatches.concat(results)
         possiblePatches
       else
@@ -47,8 +51,23 @@ class @Face
     else
       []
 
-  getAABBDistanceAndSize: (camera, transformedVectors, metrics) ->
-    aabb = this.getAABB(transformedVectors, metrics)
+  isAABBInsideFrustum: (aabb,camera,proj) ->
+    max = aabb.max.minus(camera)
+    min = aabb.min.minus(camera)
+    rightUpperFront = proj.isPointInFrustum(new Vector([max.a[0], max.a[1], max.a[2]]))
+    leftUpperFront =  proj.isPointInFrustum(new Vector([min.a[0], max.a[1], max.a[2]]))
+    leftUpperBack =   proj.isPointInFrustum(new Vector([min.a[0], max.a[1], min.a[2]]))
+    rightUpperBack =  proj.isPointInFrustum(new Vector([max.a[0], max.a[1], min.a[2]]))
+
+    rightLowerFront = proj.isPointInFrustum(new Vector([max.a[0], min.a[1], max.a[2]]))
+    leftLowerFront =  proj.isPointInFrustum(new Vector([min.a[0], min.a[1], max.a[2]]))
+    leftLowerBack =   proj.isPointInFrustum(new Vector([min.a[0], min.a[1], min.a[2]]))
+    rightLowerBack =  proj.isPointInFrustum(new Vector([max.a[0], min.a[1], min.a[2]]))
+    return rightUpperFront or leftUpperFront or leftUpperBack or rightUpperBack or
+           rightLowerFront or leftLowerFront or leftLowerBack or rightLowerBack
+
+
+  getAABBDistanceAndSize: (camera, aabb) ->
     dx = Math.max(aabb.min.a[0] - camera.a[0], 0, camera.a[0] - aabb.max.a[0]);
     dy = Math.max(aabb.min.a[1] - camera.a[1], 0, camera.a[1] - aabb.max.a[1]);
     dz = Math.max(aabb.min.a[2] - camera.a[2], 0, camera.a[2] - aabb.max.a[2]);
