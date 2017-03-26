@@ -22,32 +22,25 @@ class @Face
       leaves.push(this)
     leaves
 
-  getPossiblePatches: (camera,patch,model,proj,parentInstance,metrics) ->
+  getPossiblePatches: (camera,patch,model,proj,parentInstance,r) ->
+    if not r then r = 0
     possiblePatches = []
     this.buildPatchVectors(parentInstance,patch)
-    transformedVectors = this.buildTranformVectors(parentInstance,model,metrics)
-    
-    if @level is 0
-      t1 = new Date().getTime()
-      dot = this.normalAngle(camera,transformedVectors)
-      t2 = new Date().getTime()
-      metrics.normalAngle += (t2-t1)
-      if dot > 0 then return []
+    transformedVectors = this.buildTranformVectors(parentInstance,model)
 
-    aabb = this.getAABB(transformedVectors,metrics)
+    aabb = this.getAABB(transformedVectors)
     if !this.isAABBInsideFrustum(aabb,camera,proj) then return []
 
     stats = this.getAABBDistanceAndSize(camera, aabb)
     score = stats.distance / stats.size
-    #console.log(score)
-    if score < 6
+    if score < 12
       if @children.length == 4
         for child in @children
-          results = child.getPossiblePatches(camera,patch,model,proj,parentInstance, metrics)
+          results = child.getPossiblePatches(camera,patch,model,proj,parentInstance, r + 1)
           possiblePatches = possiblePatches.concat(results)
         possiblePatches
       else
-        [{parentInstance: parentInstance, id: @id, score: score}]
+        [{parentInstance: parentInstance, id: @id, score: score }]
     else
       []
 
@@ -73,7 +66,7 @@ class @Face
     dz = Math.max(aabb.min.a[2] - camera.a[2], 0, camera.a[2] - aabb.max.a[2]);
     {distance: Math.sqrt(dx*dx + dy*dy + dz*dz), size: aabb.max.a[0] - aabb.min.a[0]}
 
-  getAABB: (transformedVectors, metrics) ->
+  getAABB: (transformedVectors) ->
     max = new Vector([-Infinity,-Infinity,-Infinity])
     min = new Vector([Infinity,Infinity,Infinity])
     for transformedVector,i in transformedVectors
@@ -88,13 +81,12 @@ class @Face
       for vector,i in @normedVectors
         @patchedVectors[parentInstance][i] = patch.multiply(vector)
 
-  buildTranformVectors: (parentInstance,model,metrics) ->
+  buildTranformVectors: (parentInstance,model) ->
     transformedVectors = []
     for patchedVector in @patchedVectors[parentInstance]
       t1 = new Date().getTime()
       transformedVectors.push(model.multiply(patchedVector))
       t2 = new Date().getTime()
-      metrics.trans += (t2-t1)
     transformedVectors
 
   getCentroid: () ->
@@ -147,10 +139,10 @@ class @Face
     v1 = transformedVectors[1].minus(transformedVectors[0])
     v2 = transformedVectors[2].minus(transformedVectors[0])
     v1.crossProduct(v2).normalize()
-  
+
   normalAngle: (camera,transformedVectors) ->
     normal = this.getNormal(transformedVectors)
-    cVec = new Vector([0,0,0]).minus(camera).normalize()
+    cVec = camera.normalize()
     normal.dotProduct(cVec)
 
   setBary: (bary,i) -> @b[i] = bary
