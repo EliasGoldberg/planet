@@ -57,13 +57,13 @@ class @Matrix
                 -(r + l) * rw, -(t + b) * rh, -(f + n) * rd, 1])
 
   @perspective: (fovy, aspect, near, far) ->
-    fovy = Math.PI * fovy / 180 / 2
-    rd = 1 / (far - near)
-    ct = Math.cos(fovy) / Math.sin(fovy)
-    new Matrix([ ct / aspect,  0,                    0,  0,
-                           0, ct,                    0,  0,
-                           0,  0,   -(far + near) * rd, -1,
-                           0,  0, -2 * near * far * rd,  0])
+    rad = Math.PI * fovy / 180
+    f = 1.0 / Math.tan(rad / 2)
+    rInv = 1 / (near - far)
+    new Matrix([ f / aspect, 0,                     0,  0,
+                          0, f,                     0,  0,
+                          0, 0,   (near + far) * rInv, -1,
+                          0, 0, near * far * rInv * 2,  0])
 
   @flatten: (arrays) ->
     if arrays[0].length > 1
@@ -76,7 +76,7 @@ class @Matrix
   rows: -> @m[i..i+3] for i in [0..@m.length-1] by 4
   cols: -> [@m[i], @m[i+4], @m[i+8], @m[i+12]] for i in [0..3]
 
-  multiply: (b) -> if b instanceof Matrix then this.multiplyMatrix(b) else this.multiplyVector(b) 
+  multiply: (b) -> if b instanceof Matrix then this.multiplyMatrix(b) else this.multiplyVector(b)
 
   multiplyMatrix: (b) ->
     r = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]

@@ -4,7 +4,8 @@ $ ->
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.CULL_FACE)
   gl.clearColor(0.1,0.0,0.5,1.0)
-  RADIUS = 6370000
+  #RADIUS = 6370000
+  RADIUS = 10
 
   program = new ShaderProgram(gl)
 
@@ -74,7 +75,7 @@ $ ->
   y = 0
   rX = 0
   rY = 0
-  z = RADIUS * 2
+  z = RADIUS * 4
 
   program.activate()
 
@@ -112,7 +113,7 @@ $ ->
   for transformation in octantTransforms
     octantArrays = octantArrays.concat(transformation.m)
 
-  tessellate = (model, proj) ->
+  tessellate = (model, proj, view) ->
     patchArray = [].concat(octantArrays)
     patchMatrices = [].concat(octantTransforms)
     possiblePatches = []
@@ -121,7 +122,7 @@ $ ->
     while matIdx < patchMatrices.length
       matrix = patchMatrices[matIdx]
 
-      newPatches = rawFace.getPossiblePatches(new Vector([0,0,z]),matrix,model,proj,matIdx)
+      newPatches = rawFace.getPossiblePatches(new Vector([0,0,z]),matrix,model,proj,view,canvas.width, canvas.height, matIdx)
 
       for possiblePatch,i in newPatches
         discards.push(possiblePatch.parentInstance)
@@ -171,6 +172,10 @@ $ ->
   $(document.body).append('<div id="lower-left"></div>')
   $('#lower-left').css({ position:'fixed', backgroundColor:'black', color:'white', left:10 + 'px', bottom:10 + 'px' })
 
+  $(document.body).append('<div id="vert-0-0""></div>')
+  $(document.body).append('<div id="vert-0-1""></div>')
+  $(document.body).append('<div id="vert-0-2""></div>')
+
   frame = 0
   octahedron.animate = (elapsed) ->
     rX += if dragging? and dragging then diffX else 0
@@ -180,10 +185,10 @@ $ ->
     program.setUniformMatrix('u_ModelMatrix', model.array())
     view = Matrix.lookAt([0, 0, z],[0,0,0],[0,1,0])
     program.setUniformMatrix('u_ViewMatrix', view.array())
-    proj = Matrix.perspective(45, canvas.width / canvas.height, z-RADIUS-1, z+RADIUS+500)
+    proj = Matrix.perspective(90, canvas.width / canvas.height, z-RADIUS-1, z+RADIUS+500)
     program.setUniformMatrix('u_ProjMatrix', proj.array())
 
-    tessellate(model,proj)
+    tessellate(model,proj,view)
 
     frame += 1
     if (frame % 60 is 0)

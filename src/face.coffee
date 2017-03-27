@@ -1,6 +1,7 @@
 class @Face
   constructor: (v0,v1,v2,lvl) ->
-    RADIUS = 6370000
+    #RADIUS = 6370000
+    RADIUS = 10
     @v = [v0,v1,v2]
     @b = [[1,0,0],[0,1,0],[0,0,1]]
     @centroid = this.getCentroid()
@@ -22,10 +23,13 @@ class @Face
       leaves.push(this)
     leaves
 
-  getPossiblePatches: (camera,patch,model,proj,parentInstance,r) ->
+  getPossiblePatches: (camera,patch,model,proj,view,width,height,parentInstance,r) ->
     if not r then r = 0
     possiblePatches = []
     this.buildPatchVectors(parentInstance,patch)
+    if (r == 0 and parentInstance < 8)
+      cameraSpaceVertices = this.getCameraSpaceVertices(model, view, proj,width,height,parentInstance);
+
     transformedVectors = this.buildTranformVectors(parentInstance,model)
 
     aabb = this.getAABB(transformedVectors)
@@ -36,13 +40,34 @@ class @Face
     if score < 12
       if @children.length == 4
         for child in @children
-          results = child.getPossiblePatches(camera,patch,model,proj,parentInstance, r + 1)
+          results = child.getPossiblePatches(camera,patch,model,proj,view,width,height,parentInstance, r + 1)
           possiblePatches = possiblePatches.concat(results)
         possiblePatches
       else
         [{parentInstance: parentInstance, id: @id, score: score }]
     else
       []
+
+  getCameraSpaceVertices: (model, view, proj, width, height, id) ->
+    screenPoints = []
+
+    for vert,i in @normedVectors
+      projView = proj.multiply(view)
+      modelVert = model.multiply(vert)
+      m = projView.m; x = modelVert.a[0]; y = modelVert.a[1]; z = modelVert.a[2]
+      d = 1 / (m[3] * x + m[7] * y + m[11] * z + m[15])
+      hWidth = width / 2
+      hHeight = height / 2
+      sp2 = new Vector([
+        ((m[0]*x + m[4] * y + m[8] * z + m[12]) * d * hWidth) + hWidth,
+        ((m[1]*x + m[5] * y + m[9] * z + m[13]) * d * hHeight) + hHeight,
+        (m[2]*x + m[6] * y + m[10]* z + m[14]) * d
+      ])
+
+      screenPoints.push(sp2)
+      $('#vert-' + id + '-' + i).css({ position:'fixed', color:'white', backgroundColor:'black', left:sp2.a[0] + 'px', bottom:sp2.a[1] + 'px' })
+      $('#vert-' + id + '-' + i).text("#{modelVert}")
+    screenPoints
 
   isAABBInsideFrustum: (aabb,camera,proj) ->
     max = aabb.max.minus(camera)
