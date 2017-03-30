@@ -91,7 +91,7 @@ $ ->
   v0 = new Vector([0, 1, 0])
   v1 = new Vector([0, 0, 1])
   v2 = new Vector([1, 0, 0])
-  tess = 2
+  tess = 3
   scaler = 1/Math.pow(2,tess)
   rawFace = new Face(v0,v1,v2)
   octahedron = new Model(gl,program,rawFace.tessellate(tess))
@@ -119,7 +119,7 @@ $ ->
     possiblePatches = []
     matIdx = 0
     discards = []
-    while matIdx < patchMatrices.length
+    while matIdx < patchMatrices.length and patchMatrices.length < 128
       matrix = patchMatrices[matIdx]
 
       newPatches = rawFace.getPossiblePatches(new Vector([0,0,z]),matrix,model,proj,view,canvas.width, canvas.height, matIdx)
@@ -172,9 +172,10 @@ $ ->
   $(document.body).append('<div id="lower-left"></div>')
   $('#lower-left').css({ position:'fixed', backgroundColor:'black', color:'white', left:10 + 'px', bottom:10 + 'px' })
 
-  $(document.body).append('<div id="vert-0-0""></div>')
-  $(document.body).append('<div id="vert-0-1""></div>')
-  $(document.body).append('<div id="vert-0-2""></div>')
+  $(document.body).append('<div id="vert-0-0"></div>')
+  $(document.body).append('<div id="vert-0-1"></div>')
+  $(document.body).append('<div id="vert-0-2"></div>')
+  $(document.body).append('<div id="area"></div>')
 
   frame = 0
   octahedron.animate = (elapsed) ->

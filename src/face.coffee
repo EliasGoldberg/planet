@@ -27,17 +27,27 @@ class @Face
     if not r then r = 0
     possiblePatches = []
     this.buildPatchVectors(parentInstance,patch)
-    if (r == 0 and parentInstance < 8)
-      cameraSpaceVertices = this.getCameraSpaceVertices(model, view, proj,width,height,parentInstance);
+
+
 
     transformedVectors = this.buildTranformVectors(parentInstance,model)
 
-    aabb = this.getAABB(transformedVectors)
-    if !this.isAABBInsideFrustum(aabb,camera,proj) then return []
+    screenVertices = this.getScreenVertices(model, view, proj,width,height,parentInstance);
+    area = this.getScreenArea(screenVertices)
 
-    stats = this.getAABBDistanceAndSize(camera, aabb)
-    score = stats.distance / stats.size
-    if score < 12
+    if (r == 0 and parentInstance < 8)
+      screenCenter = this.getNormedCentroid().screen(proj, view, model, width, height)
+      $('#vert-' + parentInstance + '-0').css({ position:'fixed', color:'white', backgroundColor:'black', left:screenVertices[0].a[0] + 'px', bottom:screenVertices[0].a[1] + 'px' })
+      $('#vert-' + parentInstance + '-0').text("#{screenVertices[0]}")
+      $('#vert-' + parentInstance + '-1').css({ position:'fixed', color:'white', backgroundColor:'black', left:screenVertices[1].a[0] + 'px', bottom:screenVertices[1].a[1] + 'px' })
+      $('#vert-' + parentInstance + '-1').text("#{screenVertices[1]}")
+      $('#vert-' + parentInstance + '-2').css({ position:'fixed', color:'white', backgroundColor:'black', left:screenVertices[2].a[0] + 'px', bottom:screenVertices[2].a[1] + 'px' })
+      $('#vert-' + parentInstance + '-2').text("#{screenVertices[2]}")
+      $('#area').css({ position:'fixed', color:'white', backgroundColor:'purple', left:screenCenter.a[0] + 'px', bottom:screenCenter.a[1] + 'px' })
+      $('#area').text("#{area}")
+
+    score = area
+    if score > 500
       if @children.length == 4
         for child in @children
           results = child.getPossiblePatches(camera,patch,model,proj,view,width,height,parentInstance, r + 1)
@@ -48,26 +58,21 @@ class @Face
     else
       []
 
-  getCameraSpaceVertices: (model, view, proj, width, height, id) ->
+  getScreenVertices: (model, view, proj, width, height, id) ->
     screenPoints = []
 
-    for vert,i in @normedVectors
-      projView = proj.multiply(view)
-      modelVert = model.multiply(vert)
-      m = projView.m; x = modelVert.a[0]; y = modelVert.a[1]; z = modelVert.a[2]
-      d = 1 / (m[3] * x + m[7] * y + m[11] * z + m[15])
-      hWidth = width / 2
-      hHeight = height / 2
-      sp2 = new Vector([
-        ((m[0]*x + m[4] * y + m[8] * z + m[12]) * d * hWidth) + hWidth,
-        ((m[1]*x + m[5] * y + m[9] * z + m[13]) * d * hHeight) + hHeight,
-        (m[2]*x + m[6] * y + m[10]* z + m[14]) * d
-      ])
-
+    for vert,i in @patchedVectors[id]
+      sp2 = vert.screen(proj, view, model, width, height)
       screenPoints.push(sp2)
-      $('#vert-' + id + '-' + i).css({ position:'fixed', color:'white', backgroundColor:'black', left:sp2.a[0] + 'px', bottom:sp2.a[1] + 'px' })
-      $('#vert-' + id + '-' + i).text("#{modelVert}")
+      modelVert = model.multiply(vert)
     screenPoints
+
+  getScreenArea: (screenPoints) ->
+    a = screenPoints[0]; b = screenPoints[1]; c = screenPoints[2]
+    ab = a.distance(b); ac = a.distance(c); bc = b.distance(c);
+    p = (ab + ac + bc) / 2
+    Math.sqrt(p * (p-ab) * (p-ac) * (p-bc))
+
 
   isAABBInsideFrustum: (aabb,camera,proj) ->
     max = aabb.max.minus(camera)
@@ -109,15 +114,18 @@ class @Face
   buildTranformVectors: (parentInstance,model) ->
     transformedVectors = []
     for patchedVector in @patchedVectors[parentInstance]
-      t1 = new Date().getTime()
       transformedVectors.push(model.multiply(patchedVector))
-      t2 = new Date().getTime()
     transformedVectors
 
   getCentroid: () ->
     return new Vector([(@v[0].a[0] + @v[1].a[0] + @v[2].a[0])/3,
                       (@v[0].a[1] + @v[1].a[1] + @v[2].a[1])/3,
                       (@v[0].a[2] + @v[1].a[2] + @v[2].a[2])/3])
+
+  getNormedCentroid: () ->
+    return new Vector([(@normedVectors[0].a[0] + @normedVectors[1].a[0] + @normedVectors[2].a[0])/3,
+                      (@normedVectors[0].a[1] + @normedVectors[1].a[1] + @normedVectors[2].a[1])/3,
+                      (@normedVectors[0].a[2] + @normedVectors[1].a[2] + @normedVectors[2].a[2])/3])
 
   tessellate: (subdivisions,midpointFunction,lvl) ->
     if subdivisions is 0 then return [this]
