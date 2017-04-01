@@ -8,7 +8,7 @@ describe "ShaderProgram", ->
   canvas.style.height = 200 + "px"
 
   it "should have access to a valid gl context", ->
-    gl = canvas.getContext('webgl')
+    gl = canvas.getContext('webgl2')
     expect(gl.getError()).toBe(gl.NO_ERROR)
 
   it "should create a program when initialized with a gl context", ->
@@ -41,5 +41,3 @@ describe "ShaderProgram", ->
 
     program.activate()
     expect(console.log).not.toHaveBeenCalled()
-
-
