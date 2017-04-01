@@ -4,8 +4,8 @@ $ ->
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.CULL_FACE)
   gl.clearColor(0.1,0.0,0.5,1.0)
-  #RADIUS = 6370000
-  RADIUS = 10
+  RADIUS = 6370000
+  #RADIUS = 10
 
   program = new ShaderProgram(gl)
 

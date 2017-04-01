@@ -1,14 +1,13 @@
 class @Face
   constructor: (v0,v1,v2,lvl) ->
-    #RADIUS = 6370000
-    RADIUS = 10
+    RADIUS = 6370000
+    #RADIUS = 10
     @v = [v0,v1,v2]
     @b = [[1,0,0],[0,1,0],[0,0,1]]
     @centroid = this.getCentroid()
     @children = []
     @level = if lvl? then lvl else 0
     @isUpsidedown = 0
-    @divideDistance = v0.distance(v1) * 5
     @string = "#{@v[0]}\n#{@v[1]}\n#{@v[2]}"
     @id = -1
     @normedVectors = [v0.normalize().scale(RADIUS), v1.normalize().scale(RADIUS), v2.normalize().scale(RADIUS)]
@@ -28,9 +27,12 @@ class @Face
     possiblePatches = []
     this.buildPatchVectors(parentInstance,patch)
 
-
-
     transformedVectors = this.buildTranformVectors(parentInstance,model)
+
+    if @children.length == 0
+      isFacingAway = this.normalAngle(camera,transformedVectors) < 0
+      if isFacingAway then return []
+
 
     screenVertices = this.getScreenVertices(model, view, proj,width,height,parentInstance);
     area = this.getScreenArea(screenVertices)
@@ -60,7 +62,6 @@ class @Face
 
   getScreenVertices: (model, view, proj, width, height, id) ->
     screenPoints = []
-
     for vert,i in @patchedVectors[id]
       sp2 = vert.screen(proj, view, model, width, height)
       screenPoints.push(sp2)
@@ -72,38 +73,6 @@ class @Face
     ab = a.distance(b); ac = a.distance(c); bc = b.distance(c);
     p = (ab + ac + bc) / 2
     Math.sqrt(p * (p-ab) * (p-ac) * (p-bc))
-
-
-  isAABBInsideFrustum: (aabb,camera,proj) ->
-    max = aabb.max.minus(camera)
-    min = aabb.min.minus(camera)
-    rightUpperFront = proj.isPointInFrustum(new Vector([max.a[0], max.a[1], max.a[2]]))
-    leftUpperFront =  proj.isPointInFrustum(new Vector([min.a[0], max.a[1], max.a[2]]))
-    leftUpperBack =   proj.isPointInFrustum(new Vector([min.a[0], max.a[1], min.a[2]]))
-    rightUpperBack =  proj.isPointInFrustum(new Vector([max.a[0], max.a[1], min.a[2]]))
-
-    rightLowerFront = proj.isPointInFrustum(new Vector([max.a[0], min.a[1], max.a[2]]))
-    leftLowerFront =  proj.isPointInFrustum(new Vector([min.a[0], min.a[1], max.a[2]]))
-    leftLowerBack =   proj.isPointInFrustum(new Vector([min.a[0], min.a[1], min.a[2]]))
-    rightLowerBack =  proj.isPointInFrustum(new Vector([max.a[0], min.a[1], min.a[2]]))
-    return rightUpperFront or leftUpperFront or leftUpperBack or rightUpperBack or
-           rightLowerFront or leftLowerFront or leftLowerBack or rightLowerBack
-
-
-  getAABBDistanceAndSize: (camera, aabb) ->
-    dx = Math.max(aabb.min.a[0] - camera.a[0], 0, camera.a[0] - aabb.max.a[0]);
-    dy = Math.max(aabb.min.a[1] - camera.a[1], 0, camera.a[1] - aabb.max.a[1]);
-    dz = Math.max(aabb.min.a[2] - camera.a[2], 0, camera.a[2] - aabb.max.a[2]);
-    {distance: Math.sqrt(dx*dx + dy*dy + dz*dz), size: aabb.max.a[0] - aabb.min.a[0]}
-
-  getAABB: (transformedVectors) ->
-    max = new Vector([-Infinity,-Infinity,-Infinity])
-    min = new Vector([Infinity,Infinity,Infinity])
-    for transformedVector,i in transformedVectors
-      for i in [0..2]
-        if transformedVector.a[i] < min.a[i] then min.a[i] = transformedVector.a[i]
-        if transformedVector.a[i] > max.a[i] then max.a[i] = transformedVector.a[i]
-    { min: min, max: max }
 
   buildPatchVectors: (parentInstance,patch) ->
     if not @patchedVectors[parentInstance]?
