@@ -11,7 +11,6 @@ class @Face
     @string = "#{@v[0]}\n#{@v[1]}\n#{@v[2]}"
     @id = -1
     @normedVectors = [v0.normalize().scale(RADIUS), v1.normalize().scale(RADIUS), v2.normalize().scale(RADIUS)]
-    @patchedVectors = []
 
   getLeafFaces: () ->
     leaves = []
@@ -22,51 +21,37 @@ class @Face
       leaves.push(this)
     leaves
 
-  getPossiblePatches: (camera,patch,model,proj,view,width,height,parentInstance,r) ->
-    if not r then r = 0
+  getPossiblePatches: (camera,patch,model,proj,view,width,height) ->
     possiblePatches = []
-    this.buildPatchVectors(parentInstance,patch)
 
-    transformedVectors = this.buildTranformVectors(parentInstance,model)
+    patchVertices = this.buildPatchVertices(patch)
+    transformedVertices = this.buildTranformVertices(patchVertices,model)
 
     if @children.length == 0
-      isFacingAway = this.normalAngle(camera,transformedVectors) < 0
+      angle = this.normalAngle(camera, transformedVertices)
+      isFacingAway = angle < 0
       if isFacingAway then return []
 
-
-    screenVertices = this.getScreenVertices(model, view, proj,width,height,parentInstance);
+    screenVertices = this.getScreenVertices(patchVertices, model, view, proj, width, height);
     area = this.getScreenArea(screenVertices)
-
-    if (r == 0 and parentInstance < 8)
-      screenCenter = this.getNormedCentroid().screen(proj, view, model, width, height)
-      $('#vert-' + parentInstance + '-0').css({ position:'fixed', color:'white', backgroundColor:'black', left:screenVertices[0].a[0] + 'px', bottom:screenVertices[0].a[1] + 'px' })
-      $('#vert-' + parentInstance + '-0').text("#{screenVertices[0]}")
-      $('#vert-' + parentInstance + '-1').css({ position:'fixed', color:'white', backgroundColor:'black', left:screenVertices[1].a[0] + 'px', bottom:screenVertices[1].a[1] + 'px' })
-      $('#vert-' + parentInstance + '-1').text("#{screenVertices[1]}")
-      $('#vert-' + parentInstance + '-2').css({ position:'fixed', color:'white', backgroundColor:'black', left:screenVertices[2].a[0] + 'px', bottom:screenVertices[2].a[1] + 'px' })
-      $('#vert-' + parentInstance + '-2').text("#{screenVertices[2]}")
-      $('#area').css({ position:'fixed', color:'white', backgroundColor:'purple', left:screenCenter.a[0] + 'px', bottom:screenCenter.a[1] + 'px' })
-      $('#area').text("#{area}")
-
-    score = area
-    if score > 500
+    
+    if area > 500
       if @children.length == 4
         for child in @children
-          results = child.getPossiblePatches(camera,patch,model,proj,view,width,height,parentInstance, r + 1)
+          results = child.getPossiblePatches(camera,patch,model,proj,view,width,height)
           possiblePatches = possiblePatches.concat(results)
         possiblePatches
       else
-        [{parentInstance: parentInstance, id: @id, score: score }]
+        [{id: @id}]
     else
       []
 
-  getScreenVertices: (model, view, proj, width, height, id) ->
-    screenPoints = []
-    for vert,i in @patchedVectors[id]
-      sp2 = vert.screen(proj, view, model, width, height)
-      screenPoints.push(sp2)
-      modelVert = model.multiply(vert)
-    screenPoints
+  getScreenVertices: (patchVertices, model, view, proj, width, height) ->
+    screenVertices = []
+    for vert,i in patchVertices
+      vertex = vert.screen(proj, view, model, width, height)
+      screenVertices.push(vertex)
+    screenVertices
 
   getScreenArea: (screenPoints) ->
     a = screenPoints[0]; b = screenPoints[1]; c = screenPoints[2]
@@ -74,17 +59,17 @@ class @Face
     p = (ab + ac + bc) / 2
     Math.sqrt(p * (p-ab) * (p-ac) * (p-bc))
 
-  buildPatchVectors: (parentInstance,patch) ->
-    if not @patchedVectors[parentInstance]?
-      @patchedVectors[parentInstance] = []
-      for vector,i in @normedVectors
-        @patchedVectors[parentInstance][i] = patch.multiply(vector)
+  buildPatchVertices: (patchMatrix) ->
+    patchedVertices = []
+    for vector,i in @normedVectors
+      patchedVertices[i] = patchMatrix.multiply(vector)
+    patchedVertices;
 
-  buildTranformVectors: (parentInstance,model) ->
-    transformedVectors = []
-    for patchedVector in @patchedVectors[parentInstance]
-      transformedVectors.push(model.multiply(patchedVector))
-    transformedVectors
+  buildTranformVertices: (patchVertices, model) ->
+    transformedVertices = []
+    for patchedVertex in patchVertices
+      transformedVertices.push(model.multiply(patchedVertex))
+    transformedVertices
 
   getCentroid: () ->
     return new Vector([(@v[0].a[0] + @v[1].a[0] + @v[2].a[0])/3,

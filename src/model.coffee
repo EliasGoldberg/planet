@@ -20,15 +20,6 @@ class @Model
 
   vertexCount: () -> @vertices.length / @stride
 
-  detail: (pvm,camera) ->
-    results = {add: [], remove: []}
-    for face in @faces
-      face.detail(pvm,camera,results)
-    if results.remove.length > 0 or results.add.length > 0
-      this.removeFaces(results.remove)
-      this.addFaces(results.add)
-      this.buildModel()
-
   tessellate: (subdivisions,midpointFunction) ->
     newFaces = []
     for face in this.faces

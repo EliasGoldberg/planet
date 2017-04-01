@@ -91,7 +91,7 @@ $ ->
   v0 = new Vector([0, 1, 0])
   v1 = new Vector([0, 0, 1])
   v2 = new Vector([1, 0, 0])
-  tess = 3
+  tess = 1
   scaler = 1/Math.pow(2,tess)
   rawFace = new Face(v0,v1,v2)
   octahedron = new Model(gl,program,rawFace.tessellate(tess))
@@ -122,34 +122,35 @@ $ ->
     while matIdx < patchMatrices.length and patchMatrices.length < 128
       matrix = patchMatrices[matIdx]
 
-      newPatches = rawFace.getPossiblePatches(new Vector([0,0,z]),matrix,model,proj,view,canvas.width, canvas.height, matIdx)
+      newPatches = rawFace.getPossiblePatches(new Vector([0,0,z]), matrix, model, proj, view, canvas.width, canvas.height, matIdx)
 
       for possiblePatch,i in newPatches
-        discards.push(possiblePatch.parentInstance)
-        discards.push(possiblePatch.id)
-        discardOctant = possiblePatch.parentInstance
+
+        if patchMatrices.length == 128 then break;
+
         discardFace = possiblePatch.id
+
+        patchMatrix = Matrix.identity()
+        f = octahedron.faces[discardFace]
+        d = f.centroid.minus(octahedron.faces[0].centroid)
+        patchMatrix = patchMatrix.multiply(
+          Matrix.scalation(scaler,scaler,scaler)
+          .translate(d.a[0],d.a[1],d.a[2])
+          .translate(v0.a[0]*(1-scaler),v0.a[1]*(1-scaler),v0.a[2]*(1-scaler))
+        )
 
         centerFlip = octahedron.faces[discardFace].isUpsidedown * 180
         axis = octahedron.faces[discardFace].getNormal()
-
-        patchMatrix = Matrix.identity()
-        nested = true
-        while nested
-          f = octahedron.faces[discardFace]
-          d = f.centroid.minus(octahedron.faces[0].centroid)
-          patchMatrix = patchMatrix.multiply(
-            Matrix.scalation(scaler,scaler,scaler)
-            .translate(d.a[0],d.a[1],d.a[2])
-            .translate(v0.a[0]*(1-scaler),v0.a[1]*(1-scaler),v0.a[2]*(1-scaler))
-          )
-          nested = false
-
         patchMatrix = matrix
           .multiply(patchMatrix)
           .multiply(Matrix.rotation(centerFlip,axis.a[0],axis.a[1],axis.a[2]))
+
         patchArray = patchArray.concat(patchMatrix.m)
+
         patchMatrices.push(patchMatrix)
+        discards.push(matIdx)
+        discards.push(possiblePatch.id)
+
       matIdx += 1
       possiblePatches = possiblePatches.concat(newPatches)
 
@@ -172,10 +173,9 @@ $ ->
   $(document.body).append('<div id="lower-left"></div>')
   $('#lower-left').css({ position:'fixed', backgroundColor:'black', color:'white', left:10 + 'px', bottom:10 + 'px' })
 
-  $(document.body).append('<div id="vert-0-0"></div>')
-  $(document.body).append('<div id="vert-0-1"></div>')
-  $(document.body).append('<div id="vert-0-2"></div>')
-  $(document.body).append('<div id="area"></div>')
+  for i in [0..7]
+    console.log(i)
+    $(document.body).append('<div id="angle' + i + '"></div>')
 
   frame = 0
   octahedron.animate = (elapsed) ->
