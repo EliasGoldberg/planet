@@ -21,7 +21,7 @@ class @Face
       leaves.push(this)
     leaves
 
-  getPossiblePatches: (camera,patch,model,proj,view,width,height) ->
+  getPossiblePatches: (camera,patch,model,proj,view,width,height, idx) ->
     possiblePatches = []
 
     patchVertices = this.buildPatchVertices(patch)
@@ -32,10 +32,14 @@ class @Face
       isFacingAway = angle < 0
       if isFacingAway then return []
 
-    screenVertices = this.getScreenVertices(patchVertices, model, view, proj, width, height);
+    screenVertices = this.getScreenVertices(patchVertices, model, view, proj, width, height, idx);
     area = this.getScreenArea(screenVertices)
-    
-    if area > 500
+
+    if (idx == 0)
+      $('#angle' + idx).css({ position:'fixed', backgroundColor:'black', color:'white', left:60 + 'px', bottom:10 + 'px' })
+      $('#angle' + idx).text('test')
+
+    if area > 100
       if @children.length == 4
         for child in @children
           results = child.getPossiblePatches(camera,patch,model,proj,view,width,height)

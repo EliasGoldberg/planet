@@ -109,6 +109,21 @@ $ ->
     Matrix.scalation(-1,-1,1).rotate(180,0,1,0),
     Matrix.scalation(-1,-1,1).rotate(270,0,1,0)
   ]
+
+  subFaceTransforms = []
+  for subFace in octahedron.faces
+    centerFlip = subFace.isUpsidedown * 180
+    axis = subFace.getNormal()
+
+    patchMatrix = Matrix.identity()
+    d = subFace.centroid.minus(octahedron.faces[0].centroid)
+    patchMatrix = patchMatrix.multiply(
+      Matrix.scalation(scaler,scaler,scaler)
+      .translate(d.a[0],d.a[1],d.a[2])
+      .translate(v0.a[0]*(1-scaler),v0.a[1]*(1-scaler),v0.a[2]*(1-scaler))
+    ).multiply(Matrix.rotation(centerFlip,axis.a[0],axis.a[1],axis.a[2]))
+    subFaceTransforms.push(patchMatrix)
+
   octantArrays = []
   for transformation in octantTransforms
     octantArrays = octantArrays.concat(transformation.m)
@@ -125,34 +140,18 @@ $ ->
       newPatches = rawFace.getPossiblePatches(new Vector([0,0,z]), matrix, model, proj, view, canvas.width, canvas.height, matIdx)
 
       for possiblePatch,i in newPatches
-
         if patchMatrices.length == 128 then break;
-
         discardFace = possiblePatch.id
-
-        patchMatrix = Matrix.identity()
-        f = octahedron.faces[discardFace]
-        d = f.centroid.minus(octahedron.faces[0].centroid)
-        patchMatrix = patchMatrix.multiply(
-          Matrix.scalation(scaler,scaler,scaler)
-          .translate(d.a[0],d.a[1],d.a[2])
-          .translate(v0.a[0]*(1-scaler),v0.a[1]*(1-scaler),v0.a[2]*(1-scaler))
-        )
-
-        centerFlip = octahedron.faces[discardFace].isUpsidedown * 180
-        axis = octahedron.faces[discardFace].getNormal()
-        patchMatrix = matrix
-          .multiply(patchMatrix)
-          .multiply(Matrix.rotation(centerFlip,axis.a[0],axis.a[1],axis.a[2]))
-
+        patchMatrix = matrix.multiply(subFaceTransforms[discardFace])
         patchArray = patchArray.concat(patchMatrix.m)
-
         patchMatrices.push(patchMatrix)
         discards.push(matIdx)
         discards.push(possiblePatch.id)
+      # end for
 
       matIdx += 1
       possiblePatches = possiblePatches.concat(newPatches)
+    # end while
 
     program.setUniformVectorArray('u_discardPile',discards,2)
     program.setUniform('u_discardCount',discards.length / 2)
