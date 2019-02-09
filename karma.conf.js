@@ -46,13 +46,22 @@ module.exports = function(config) {
     autoWatch: true,
 
     plugins: [
-      'karma-firefox-launcher',
+      'karma-chrome-launcher',
       'karma-jasmine'
     ],
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Firefox'],
+    browsers: ['Chrome_headless'],
+    customLaunchers: { 
+      Chrome_headless: { 
+        base: 'Chrome',
+        flags: [
+          '--headless',
+          '--remote-debugging-port=9222'
+        ] 
+      } 
+    },
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
